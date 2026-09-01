@@ -81,8 +81,10 @@ jobs:
         database:
           - name: MySQL 8.4
             image: mysql:8.4
+            health_cmd: mysqladmin ping -h 127.0.0.1 -proot
           - name: MariaDB 11.4
             image: mariadb:11.4
+            health_cmd: mariadb-admin ping -h 127.0.0.1 -proot
     services:
       database:
         image: ${{ matrix.database.image }}
@@ -94,7 +96,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-cmd "${{ matrix.database.health_cmd }}"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
