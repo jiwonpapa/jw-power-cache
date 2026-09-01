@@ -1,29 +1,36 @@
-# Roadmap and release gates
+# JW PowerCache 배포 로드맵
 
-## Current: 0.3.0-alpha.3 Technical Preview
+## 현재 상태: 0.3.0-alpha.3 Beta 후보
 
-- conservative public guest API allowlist;
-- durable invalidation outbox and generation cache;
-- missing control-key recovery with runtime-epoch rotation;
-- rollback-safe emergency barrier;
-- G7 7.0.10 same-transaction mutation seam integration and fail-closed capability gate;
-- Redis, SQLite, MySQL, and MariaDB regression matrix;
-- reproducible release archives with checksums and provenance attestation.
+현재 목표는 **신뢰할 수 있는 오픈소스 Beta 배포**입니다. 절대 정합성이나 전체 사이트 캐시를 선전하지 않습니다.
 
-## Beta gate
+### Beta 배포 게이트
 
-- all automated quality and database matrix jobs green;
-- mixed-route 15–30 minute load test at concurrency 1/4/16/32;
-- concurrent write, purge, Redis restart, and selective-key-loss tests with zero stale/personalized responses;
-- p95 latency and throughput improve by at least 20% on designated expensive public routes, with error rate no worse than 0.1%;
-- install, upgrade, deactivate, uninstall, and rollback runbook verified on a clean G7 instance.
+- PHP 8.2/8.5, Redis, SQLite, MySQL, MariaDB CI 통과
+- 제어 키 유실, Redis 재시작, rollback, 동일 트랜잭션 무효화 테스트 통과
+- 고비용 공개 경로에서 동시성 1/4/16/32 기준 p95·처리량 20% 이상 개선, 오류율 0.1% 이하
+- 15분 대표 동시성 장애 캠페인에서 stale·개인화 응답 0건
+- 클린 설치, 이전 버전 rollback, 최신 버전 upgrade, 비활성/재활성 검증
+- 보안 신고, 지원 범위, 기여 규칙, 변경 이력, 체크섬이 포함된 배포 문서
 
-## 1.0 gate
+로컬 검증은 완료됐으며, 원격 CI와 태그 기반 릴리스 계약을 통과하면 Beta로 배포할 수 있습니다.
 
-- G7 7.0.10 same-transaction mutation seam is officially released and the plugin CI no longer depends on a feature branch;
-- site-wide settings and extension lifecycle changes have a transactional seam or an automatic maintenance barrier;
-- at least 30 days of production soak across 5 or more independent sites with no cache-caused data exposure or stale-content incident;
-- restore drill, release rollback, security disclosure, support boundary, and compatibility policy verified;
-- published signed release notes and checksums for every supported artifact.
+## 1.0 Stable 게이트
 
-Until the same-transaction seam and soak gates pass, the project must not be marketed as an absolute-consistency cache or a whole-site cache.
+- 동일 트랜잭션 mutation 훅이 포함된 공식 G7 버전 또는 명시적으로 버전 관리되는 지원 G7 패키지 확정
+- 최종 지원 G7에서 CI, 설치·업그레이드·롤백, 장애 캠페인 재실행
+- 관리자 설정의 권한, 저장, 재로드, 실행 모드 반영을 실제 브라우저에서 확인
+- 백업 복구와 릴리스 롤백 연습 통과
+- 서명된 릴리스 노트, SHA-256 체크섬, build provenance 공개
+
+고정된 `5개 사이트·30일` 조건은 두지 않습니다. 실사이트 운영 검증은 최초 유료 SLA 제공 전, 비핵심 파일럿 사이트에서 배포 규모와 위험에 맞게 수행합니다.
+
+## 상용 제공 게이트
+
+상용화는 코드 품질과 별개의 운영 상품 계약입니다.
+
+- 1.0 Stable 아티팩트 기반 설치·업데이트·롤백 지원
+- 지원 G7/PHP/Redis 버전과 제외 범위 명시
+- 장애 대응 수준, 지원 기간, 유상 업데이트 조건을 별도 계약으로 정의
+
+JW PowerCache는 공개 비회원 API의 보수적 허용목록 캐시이며, 인증·권한·개인화 응답은 상용 범위에서도 캐시하지 않습니다.
