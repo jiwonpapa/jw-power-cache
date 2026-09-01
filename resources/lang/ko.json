@@ -4,8 +4,8 @@
     },
     "settings": {
         "title": "JW PowerCache 설정",
-        "description": "검증된 비회원 공개 API만 세대 기반으로 캐시합니다. 처음에는 observe 모드로 진단하십시오.",
-        "safety_notice": "active 전 php artisan power-cache:doctor를 실행하십시오. file 저장소는 단일 노드 확인 환경변수가 필요합니다.",
+        "description": "검증된 공개 API와 사용자별 게시판 목록을 세대 기반으로 캐시합니다. 처음에는 observe 모드로 진단하십시오.",
+        "safety_notice": "active 전 php artisan power-cache:doctor를 실행하십시오. 캐시는 G7 관리자가 선택한 시스템 저장소를 사용합니다.",
         "sections": {
             "operation": "운영 모드",
             "routes": "캐시 허용 경로",
@@ -17,11 +17,9 @@
         "fields": {
             "mode": "실행 모드",
             "mode_hint": "observe는 저장·HIT 없이 적합성만 기록하고, active만 캐시를 제공합니다.",
-            "store_driver": "캐시 저장소",
-            "store_driver_hint": "단일 노드는 file, 다중 노드·운영은 전용 Redis를 권장합니다.",
             "cache_public_pages": "공개 페이지 상세",
             "cache_public_categories": "쇼핑몰 공개 카테고리 트리·상세",
-            "cache_public_board_lists": "공개 게시판 비회원 목록(1~3페이지)",
+            "cache_public_board_lists": "공개 게시판 목록(1~3페이지)",
             "automatic_recovery": "미적용 아웃박스 자동 복구",
             "metrics_enabled": "캐시 상태 메트릭 기록",
             "debug_headers": "X-JW-Power-Cache 디버그 헤더",

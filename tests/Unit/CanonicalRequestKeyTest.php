@@ -66,4 +66,42 @@ final class CanonicalRequestKeyTest extends PowerCacheTestCase
 
         self::assertNotSame($desktop, $mobile);
     }
+
+    public function test_authenticated_board_policy_isolates_each_user_and_public_requests(): void
+    {
+        $policy = new RoutePolicy(
+            'board-public-hot-list-v1',
+            'api.modules.sirsoft-board.boards.posts.index',
+            ['site', 'board:all'],
+            ['page'],
+            ['api'],
+            cacheAuthenticatedUsers: true,
+        );
+        $snapshot = new RuntimeSnapshot('site-a', 'epoch-a', 0);
+        $keys = new CanonicalRequestKey;
+        $public = $this->request(query: ['page' => '1']);
+        $userOne = $this->request(query: ['page' => '1']);
+        $userOne->setUserResolver(static fn () => new class
+        {
+            public function getAuthIdentifier(): int
+            {
+                return 10;
+            }
+        });
+        $userTwo = $this->request(query: ['page' => '1']);
+        $userTwo->setUserResolver(static fn () => new class
+        {
+            public function getAuthIdentifier(): int
+            {
+                return 20;
+            }
+        });
+
+        $publicKey = $keys->build($public, $policy, $snapshot, 'ko', 'Asia/Seoul');
+        $userOneKey = $keys->build($userOne, $policy, $snapshot, 'ko', 'Asia/Seoul');
+        $userTwoKey = $keys->build($userTwo, $policy, $snapshot, 'ko', 'Asia/Seoul');
+
+        self::assertNotSame($publicKey, $userOneKey);
+        self::assertNotSame($userOneKey, $userTwoKey);
+    }
 }

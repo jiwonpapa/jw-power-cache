@@ -2,7 +2,7 @@
 
 ## Request path
 
-Eligible guest requests pass an explicit route and presentation contract. Active mode reads a clean control barrier, runtime snapshot, generation vector, and cached response. Any missing, malformed, dirty, or mismatched state becomes a MISS/BYPASS; it is never interpreted as generation zero.
+Eligible requests pass an explicit route and presentation contract. Public board requests use a public key; authenticated board requests use a user-ID-isolated key and repeat the original read-permission check before HIT delivery. Active mode reads a clean control barrier, runtime snapshot, generation vector, and cached response. Any missing, malformed, dirty, or mismatched state becomes a MISS/BYPASS; it is never interpreted as generation zero.
 
 ## Mutation path
 
@@ -20,7 +20,7 @@ After restoring a database backup, the restored runtime epoch must never be trus
 
 | Failure | Serving behavior | Recovery |
 |---|---|---|
-| Redis unavailable | origin BYPASS | automatic on next healthy request |
+| G7 cache store unavailable | origin BYPASS | automatic on next healthy request |
 | generation key missing/invalid | HIT blocked | rotate DB runtime epoch and rebuild all known generations |
 | barrier or runtime snapshot missing | HIT blocked | rotate epoch and rebuild control plane |
 | process exits after DB commit | HIT blocked by dirty state/barrier | idempotent outbox reconciliation |
@@ -32,6 +32,6 @@ After restoring a database backup, the restored runtime epoch must never be trus
 ## Trust boundaries
 
 - G7 authentication, permission, IDV, locale, and approved middleware execute before cache delivery.
-- The dedicated cache store is untrusted for correctness; DB outbox/state is the durable authority.
+- The administrator-selected G7 cache store is untrusted for correctness; DB outbox/state is the durable authority.
 - Cache payloads are revalidated before response construction.
-- G7 hooks emitted after the content transaction commit leave a core-level atomicity gap. This is the principal 1.0 blocker.
+- G7 7.0.9 hooks emitted after the content transaction commit leave a short core-level atomicity gap. This is the principal 1.0 blocker.

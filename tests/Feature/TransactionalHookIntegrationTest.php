@@ -23,6 +23,10 @@ final class TransactionalHookIntegrationTest extends PowerCacheTestCase
     {
         parent::setUp();
 
+        if (! method_exists(HookManager::class, 'doTransactionalAction')) {
+            self::markTestSkipped('Official G7 7.0.9 uses standard synchronous hooks.');
+        }
+
         $this->app->instance('events', new Dispatcher($this->app));
         HookManager::resetAll();
         HookListenerRegistrar::clear();

@@ -1,0 +1,10 @@
+timestamp=2026-09-01T14:29:49+09:00
+fpm_cpu_nsec=424378242000
+fpm_memory_bytes=120369152
+Questions=2361011
+Slow_queries=233
+Threads_running=2
+used_memory=3581136
+total_commands_processed=13359855
+evicted_keys=0
+loadavg=0.31 0.30 0.21 1/229 1206782

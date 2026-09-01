@@ -2,27 +2,22 @@
 
 namespace Plugins\Jw\PowerCache\Store;
 
-use Illuminate\Cache\RedisStore;
-use Illuminate\Cache\Repository;
+use App\Contracts\Extension\CacheInterface;
 use Illuminate\Contracts\Cache\Lock;
 use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Plugins\Jw\PowerCache\Runtime\ControlBarrierState;
 use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 use RuntimeException;
-use Throwable;
 
-final class LaravelPowerCacheStore implements PowerCacheStoreInterface
+final class G7PowerCacheStore implements PowerCacheStoreInterface
 {
     private const EMERGENCY_DIRTY_KEY = 'barrier:emergency-dirty';
 
     private const RUNTIME_SNAPSHOT_KEY = 'barrier:runtime-snapshot';
 
-    public function __construct(
-        private readonly Repository $cache,
-        private readonly string $driver,
-        private readonly ?string $filePath = null,
-        private readonly ?string $fileGcSafeRoot = null,
-    ) {}
+    private const CONTROL_TTL_SECONDS = 315_360_000;
+
+    public function __construct(private readonly CacheInterface $cache) {}
 
     public function getResponse(string $requestKey): ?array
     {
@@ -86,8 +81,8 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
             foreach ($scopes as $scope) {
                 $key = $this->generationKey($scope);
                 $current = max(0, (int) $this->cache->get($key, 0));
-                if ($eventId > $current && ! $this->cache->forever($key, $eventId)) {
-                    throw new RuntimeException("JW PowerCache generation write failed: {$scope}");
+                if ($eventId > $current) {
+                    $this->writeControl($key, $eventId);
                 }
             }
         } finally {
@@ -97,7 +92,7 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
 
     public function acquireLock(string $name, int $leaseSeconds): ?Lock
     {
-        $lock = $this->cache->lock($this->lockKey($name), max(1, $leaseSeconds));
+        $lock = new DatabaseLeaseLock($name, max(1, $leaseSeconds));
 
         return $lock->get() ? $lock : null;
     }
@@ -182,18 +177,11 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
             }
 
             foreach ($this->normalizeScopes($scopes) as $scope) {
-                if (! $this->cache->forever($this->generationKey($scope), 0)) {
-                    throw new RuntimeException("JW PowerCache generation reset failed: {$scope}");
-                }
+                $this->writeControl($this->generationKey($scope), 0);
             }
 
             $this->putRuntimeSnapshot($snapshot);
-            $this->putControlBarrier(
-                false,
-                'clean:'.bin2hex(random_bytes(16)),
-                0,
-                'control_plane_reset',
-            );
+            $this->putControlBarrier(false, 'clean:'.bin2hex(random_bytes(16)), 0, 'control_plane_reset');
 
             return true;
         } finally {
@@ -220,13 +208,11 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
 
     public function putRuntimeSnapshot(RuntimeSnapshot $snapshot): void
     {
-        if (! $this->cache->forever(self::RUNTIME_SNAPSHOT_KEY, [
+        $this->writeControl(self::RUNTIME_SNAPSHOT_KEY, [
             'site_id' => $snapshot->siteId,
             'runtime_epoch' => $snapshot->runtimeEpoch,
             'dirty_event_id' => $snapshot->dirtyEventId,
-        ])) {
-            throw new RuntimeException('JW PowerCache runtime snapshot write failed.');
-        }
+        ]);
     }
 
     public function forgetRuntimeSnapshot(): void
@@ -238,8 +224,8 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
     {
         $metric = preg_replace('/[^a-z0-9_.:-]/i', '_', $metric) ?: 'unknown';
         $key = 'metric:'.gmdate('YmdH').':'.$metric;
-        $this->cache->add($key, 0, 691200);
-        $this->cache->increment($key);
+        $next = max(0, (int) $this->cache->get($key, 0)) + 1;
+        $this->cache->put($key, $next, 691_200);
     }
 
     public function probe(): array
@@ -250,33 +236,20 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
         $readBack = $this->cache->get($key);
         $this->cache->forget($key);
 
-        $result = [
+        return [
             'ok' => $written && hash_equals($value, (string) $readBack),
-            'driver' => $this->driver,
+            'driver' => $this->driverName(),
         ];
-
-        if ($this->driver === 'redis' && $this->cache->getStore() instanceof RedisStore) {
-            $result['redis'] = $this->redisDiagnostics($this->cache->getStore());
-        }
-
-        return $result;
     }
 
     public function garbageCollect(): array
     {
-        if ($this->driver !== 'file' || $this->filePath === null) {
-            return ['supported' => false, 'deleted' => 0];
-        }
-
-        return (new FileCacheGarbageCollector)->collect(
-            $this->filePath,
-            safeRoot: $this->fileGcSafeRoot,
-        );
+        return ['supported' => false, 'deleted' => 0];
     }
 
     public function driverName(): string
     {
-        return $this->driver;
+        return $this->cache->getStore();
     }
 
     private function responseKey(string $requestKey): string
@@ -287,11 +260,6 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
     private function generationKey(string $scope): string
     {
         return 'generation:'.hash('sha256', $scope);
-    }
-
-    private function lockKey(string $name): string
-    {
-        return 'lock:'.hash('sha256', $name);
     }
 
     private function controlWriterLock(): Lock
@@ -306,66 +274,21 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
 
     private function putControlBarrier(bool $dirty, string $token, int $eventId, string $reason): void
     {
-        if (! $this->cache->forever(self::EMERGENCY_DIRTY_KEY, [
+        $this->writeControl(self::EMERGENCY_DIRTY_KEY, [
             'version' => 1,
             'dirty' => $dirty,
             'token' => $token,
             'event_id' => max(0, $eventId),
             'reason' => mb_substr($reason, 0, 500),
             'updated_at' => gmdate(DATE_ATOM),
-        ])) {
-            throw new RuntimeException('JW PowerCache control barrier write failed.');
-        }
+        ]);
     }
 
-    /** @return array<string, int|string|null> */
-    private function redisDiagnostics(RedisStore $store): array
+    private function writeControl(string $key, mixed $value): void
     {
-        try {
-            $connection = $store->connection();
-            $policy = $this->redisConfigValue(
-                $connection->command('config', ['GET', 'maxmemory-policy']),
-                'maxmemory-policy',
-            );
-            $maxMemory = $this->redisConfigValue(
-                $connection->command('config', ['GET', 'maxmemory']),
-                'maxmemory',
-            );
-            $stats = $connection->command('info', ['stats']);
-            $evictedKeys = null;
-            if (is_array($stats)) {
-                $statsSection = $stats['Stats'] ?? $stats['stats'] ?? $stats;
-                if (is_array($statsSection) && is_numeric($statsSection['evicted_keys'] ?? null)) {
-                    $evictedKeys = (int) $statsSection['evicted_keys'];
-                }
-            } elseif (is_string($stats)) {
-                preg_match('/^evicted_keys:(\d+)$/m', $stats, $evicted);
-                $evictedKeys = isset($evicted[1]) ? (int) $evicted[1] : null;
-            }
-
-            return [
-                'maxmemory_policy' => $policy,
-                'maxmemory_bytes' => $maxMemory === null ? null : max(0, (int) $maxMemory),
-                'evicted_keys' => $evictedKeys,
-            ];
-        } catch (Throwable $e) {
-            return ['diagnostics_error' => $e->getMessage()];
+        if (! $this->cache->put($key, $value, self::CONTROL_TTL_SECONDS)) {
+            throw new RuntimeException("JW PowerCache control write failed: {$key}");
         }
-    }
-
-    private function redisConfigValue(mixed $result, string $name): ?string
-    {
-        if (! is_array($result)) {
-            return null;
-        }
-
-        if (isset($result[$name]) && is_scalar($result[$name])) {
-            return (string) $result[$name];
-        }
-
-        $values = array_values($result);
-
-        return isset($values[1]) && is_scalar($values[1]) ? (string) $values[1] : null;
     }
 
     /** @param array<int, string> $scopes @return array<int, string> */

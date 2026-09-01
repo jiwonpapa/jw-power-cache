@@ -15,11 +15,16 @@ use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Plugins\Jw\PowerCache\Infrastructure\DatabaseInvalidationRepository;
 use Plugins\Jw\PowerCache\LoadingUx\LoadingUxSettings;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
-use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
+use Plugins\Jw\PowerCache\Store\G7PowerCacheStore;
 
 final class PowerCacheServiceProvider extends BasePluginServiceProvider
 {
     protected string $pluginIdentifier = 'jw-power_cache';
+
+    /** @var array<int, class-string> */
+    protected array $cacheServices = [
+        G7PowerCacheStore::class,
+    ];
 
     public function register(): void
     {
@@ -27,24 +32,11 @@ final class PowerCacheServiceProvider extends BasePluginServiceProvider
 
         $root = dirname(__DIR__, 2);
         $this->mergeConfigFrom($root.'/config/power_cache.php', 'jw_power_cache');
-        $this->registerDedicatedStores();
 
         $this->app->scoped(PowerCacheSettings::class);
         $this->app->scoped(LoadingUxSettings::class);
         $this->app->singleton(InvalidationRepositoryInterface::class, DatabaseInvalidationRepository::class);
-        $this->app->scoped(PowerCacheStoreInterface::class, function ($app): PowerCacheStoreInterface {
-            $settings = $app->make(PowerCacheSettings::class);
-            $driver = $settings->storeDriver();
-
-            $storeName = (string) config("jw_power_cache.stores.{$driver}");
-
-            return new LaravelPowerCacheStore(
-                $app['cache']->store($storeName),
-                $driver,
-                $driver === 'file' ? (string) config('jw_power_cache.file.path') : null,
-                $driver === 'file' ? (string) config('jw_power_cache.file.gc_safe_root') : null,
-            );
-        });
+        $this->app->scoped(PowerCacheStoreInterface::class, G7PowerCacheStore::class);
     }
 
     public function boot(): void
@@ -62,38 +54,5 @@ final class PowerCacheServiceProvider extends BasePluginServiceProvider
                 RestoreFinalizeCommand::class,
             ]);
         }
-    }
-
-    private function registerDedicatedStores(): void
-    {
-        config([
-            'cache.stores.jw_power_cache_file' => [
-                'driver' => 'file',
-                'path' => config('jw_power_cache.file.path'),
-                'lock_path' => config('jw_power_cache.file.path').'/locks',
-            ],
-            'cache.stores.jw_power_cache_redis' => [
-                'driver' => 'redis',
-                'connection' => config('jw_power_cache.redis.connection'),
-                'lock_connection' => config('jw_power_cache.redis.connection'),
-                'prefix' => config('jw_power_cache.redis.prefix'),
-            ],
-            'cache.stores.jw_power_cache_array' => [
-                'driver' => 'array',
-                'serialize' => true,
-            ],
-            'database.redis.jw_power_cache' => [
-                'url' => config('jw_power_cache.redis.url'),
-                'host' => config('jw_power_cache.redis.host'),
-                'username' => config('jw_power_cache.redis.username'),
-                'password' => config('jw_power_cache.redis.password'),
-                'port' => config('jw_power_cache.redis.port'),
-                'database' => config('jw_power_cache.redis.database'),
-                'max_retries' => 1,
-                'backoff_algorithm' => 'decorrelated_jitter',
-                'backoff_base' => 50,
-                'backoff_cap' => 250,
-            ],
-        ]);
     }
 }

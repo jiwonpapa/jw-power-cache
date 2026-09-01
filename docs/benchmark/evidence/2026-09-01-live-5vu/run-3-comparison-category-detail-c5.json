@@ -1,0 +1,29 @@
+{
+    "pass": true,
+    "gate_type": "capped_endurance",
+    "route": "category-detail",
+    "bypass": {
+        "p95_ms": 399.009,
+        "requests_per_second": 2,
+        "error_rate": 0
+    },
+    "active": {
+        "p95_ms": 276.203,
+        "requests_per_second": 2,
+        "error_rate": 0
+    },
+    "p95_improvement_percent": 30.8,
+    "throughput_improvement_percent": null,
+    "active_error_rate": 0,
+    "checks": {
+        "p95": true,
+        "throughput": null,
+        "error_rate": true,
+        "response_checksum": true
+    },
+    "targets": {
+        "p95_improvement_percent": 20,
+        "throughput_improvement_percent": 20,
+        "max_error_rate": 0.001
+    }
+}

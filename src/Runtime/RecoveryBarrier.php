@@ -21,11 +21,6 @@ final class RecoveryBarrier
     public function inspect(array $scopes = []): BarrierResult
     {
         try {
-            if ($this->store->driverName() === 'file'
-                && ! (bool) config('jw_power_cache.file.single_node_ack', false)) {
-                return BarrierResult::blocked('file_single_node_unacknowledged');
-            }
-
             $control = $this->store->controlBarrier();
             if ($control === null) {
                 return $this->recoverMissingControlPlane('barrier_missing', $scopes);

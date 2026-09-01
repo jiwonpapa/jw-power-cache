@@ -136,7 +136,7 @@ final class CoreInvalidationListener implements HookListenerInterface
         }
 
         try {
-            // 저장소 드라이버가 바뀌어도 이전 저장소 키가 재활성화되지 않도록 DB epoch를 회전합니다.
+            // PowerCache 설정 변경 뒤 이전 응답이 재활성화되지 않도록 DB epoch를 회전합니다.
             $token = $this->store->markEmergencyDirty('power_cache_settings_change');
             $this->repository->rotateRuntimeEpoch();
             if (! $this->store->resetControlPlane(

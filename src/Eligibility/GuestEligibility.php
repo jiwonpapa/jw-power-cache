@@ -10,6 +10,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
 use Plugins\Jw\PowerCache\Policy\RoutePolicy;
+use Throwable;
 
 final class GuestEligibility
 {
@@ -17,11 +18,8 @@ final class GuestEligibility
         private readonly ?ExtensionMiddlewareRegistryInterface $extensionMiddleware = null,
     ) {}
 
-    private const SENSITIVE_HEADERS = [
-        'Authorization',
+    private const ALWAYS_SENSITIVE_HEADERS = [
         'Proxy-Authorization',
-        'X-XSRF-TOKEN',
-        'X-CSRF-TOKEN',
         'X-G7-Guest-Order-Token',
         'X-Guest-Order-Token',
         'X-Cart-Key',
@@ -35,17 +33,36 @@ final class GuestEligibility
             return EligibilityResult::bypass('method');
         }
 
-        foreach (self::SENSITIVE_HEADERS as $header) {
+        $user = $request->user();
+
+        foreach (self::ALWAYS_SENSITIVE_HEADERS as $header) {
             if ($request->headers->has($header)) {
                 return EligibilityResult::bypass('sensitive_header');
             }
         }
 
-        if ($request->user() !== null) {
+        if ($request->headers->has('Authorization')) {
+            $bearerToken = $request->bearerToken();
+            if (! $policy->cacheAuthenticatedUsers
+                || ! is_string($bearerToken)
+                || $bearerToken === '') {
+                return EligibilityResult::bypass('sensitive_header');
+            }
+        }
+
+        foreach (['X-XSRF-TOKEN', 'X-CSRF-TOKEN'] as $header) {
+            if ($request->headers->has($header) && ! $policy->allowBrowserSession) {
+                return EligibilityResult::bypass('sensitive_header');
+            }
+        }
+
+        if ($user !== null && ! $policy->cacheAuthenticatedUsers) {
             return EligibilityResult::bypass('authenticated_user');
         }
 
-        if ($request->cookies->count() > 0) {
+        if ($request->cookies->count() > 0
+            && (! $policy->allowBrowserSession
+                || ($user === null && ! $this->onlyBrowserSessionCookies($request)))) {
             return EligibilityResult::bypass('cookie');
         }
 
@@ -78,8 +95,15 @@ final class GuestEligibility
 
         if ($policy->guestPermission !== null) {
             $permission = $this->resolvePermission($request, $policy->guestPermission);
-            if ($permission === null
-                || ! GuestRoleResolver::hasPermission($permission, PermissionType::User)) {
+            if ($permission === null) {
+                return EligibilityResult::bypass($user === null ? 'guest_permission' : 'user_permission');
+            }
+
+            if ($user !== null) {
+                if (! $this->userHasPermission($user, $permission)) {
+                    return EligibilityResult::bypass('user_permission');
+                }
+            } elseif (! GuestRoleResolver::hasPermission($permission, PermissionType::User)) {
                 return EligibilityResult::bypass('guest_permission');
             }
         }
@@ -166,5 +190,29 @@ final class GuestEligibility
         }, $template);
 
         return $missing || ! is_string($resolved) || $resolved === '' ? null : $resolved;
+    }
+
+    private function onlyBrowserSessionCookies(Request $request): bool
+    {
+        $allowed = ['XSRF-TOKEN'];
+        $sessionCookie = config('session.cookie', 'laravel_session');
+        if (is_string($sessionCookie) && $sessionCookie !== '') {
+            $allowed[] = $sessionCookie;
+        }
+
+        return array_diff(array_keys($request->cookies->all()), $allowed) === [];
+    }
+
+    private function userHasPermission(mixed $user, string $permission): bool
+    {
+        if (! is_object($user) || ! method_exists($user, 'hasPermission')) {
+            return false;
+        }
+
+        try {
+            return $user->hasPermission($permission, PermissionType::User) === true;
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

@@ -2,8 +2,8 @@
 
 namespace Plugins\Jw\PowerCache\Tests\Support;
 
-use Illuminate\Cache\ArrayStore;
-use Illuminate\Cache\Repository as CacheRepository;
+use App\Extension\Cache\PluginCacheDriver;
+use Illuminate\Cache\CacheServiceProvider;
 use Illuminate\Config\Repository as ConfigRepository;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\DatabaseTransactionsManager;
@@ -13,7 +13,7 @@ use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Facade;
 use PHPUnit\Framework\TestCase;
 use Plugins\Jw\PowerCache\Infrastructure\DatabaseInvalidationRepository;
-use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
+use Plugins\Jw\PowerCache\Store\G7PowerCacheStore;
 use Psr\Log\NullLogger;
 
 abstract class PowerCacheTestCase extends TestCase
@@ -35,14 +35,20 @@ abstract class PowerCacheTestCase extends TestCase
         $this->app->instance('config', new ConfigRepository([
             'app' => ['locale' => 'ko', 'fallback_locale' => 'en'],
             'database' => ['default' => 'testing'],
+            'cache' => [
+                'default' => 'array',
+                'stores' => [
+                    'array' => ['driver' => 'array', 'serialize' => true],
+                ],
+            ],
             'jw_power_cache' => [
                 'format_version' => 2,
-                'policy_version' => 'guest-api-v2',
+                'policy_version' => 'response-api-v3',
                 'control_scopes' => ['site', 'page:all', 'category:tree', 'board:all'],
-                'file' => ['single_node_ack' => true],
             ],
         ]));
         Facade::setFacadeApplication($this->app);
+        $this->app->register(CacheServiceProvider::class);
 
         $this->database = new Capsule($this->app);
         $this->database->addConnection($this->test_database_config(), 'testing');
@@ -76,9 +82,9 @@ abstract class PowerCacheTestCase extends TestCase
         return new DatabaseInvalidationRepository;
     }
 
-    protected function arrayStore(): LaravelPowerCacheStore
+    protected function arrayStore(): G7PowerCacheStore
     {
-        $store = new LaravelPowerCacheStore(new CacheRepository(new ArrayStore(true)), 'array');
+        $store = new G7PowerCacheStore(new PluginCacheDriver('jw-power_cache', 'array'));
         $token = $store->markEmergencyDirty('test-bootstrap', 'test-bootstrap');
         $store->resetControlPlane(
             $this->repository()->snapshot(),

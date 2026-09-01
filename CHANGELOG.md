@@ -4,6 +4,13 @@
 
 ### Added
 
+- 승인된 원격 G7의 기존 모드를 복원하며 5VU 혼합·경로별 3회 비교를 재현하는 실서버 벤치마크 도구
+- g7devops.com 공개 HTTPS에서 수집한 총 2,880건의 원시 결과, 서버 telemetry, 3회 중앙값 보고서
+
+## [0.4.0-beta.1] - 2026-09-01
+
+### Added
+
 - 캐시 모드와 독립적인 Loading UX 설정, 병합 레이아웃 필터, 공식 템플릿 큰 로딩 패턴 프로필
 - DataGrid·게시판·상세·카드·상품·폼·설정 화면을 분류하는 플러그인 소유 DOM 스켈레톤 렌더러
 - 120ms 지연 표시, 최소 표시시간 없음, 다크·모바일·reduced motion·접근성 지원
@@ -15,7 +22,39 @@
 
 ### Compatibility
 
-- Loading UX 런타임 계약은 G7 7.0.0~7.0.9 태그에서 확인했으며, 플러그인 전체의 transaction seam 릴리스 게이트 때문에 `0.4.0-beta.1` 승격은 보류
+- Loading UX 런타임 계약은 G7 7.0.0~7.0.9 태그에서 확인했으며, 플러그인 전체 지원 기준은 공식 G7 7.0.9 이상
+
+## [0.3.0-beta.3] - 2026-09-01
+
+### Changed
+
+- 로그인 게시판 목록 요청을 사용자 ID별 캐시 키로 격리해 반복 조회를 HIT로 제공
+- 게시판 안전 GET에서는 G7 표준 세션·XSRF를 허용하되, 공개 요청의 알 수 없는 쿠키와 모든 민감 토큰은 계속 우회
+- 브라우저에 남은 Bearer 값이 `optional.sanctum`에서 사용자로 해석되지 않으면 공개 권한·공개 키로 처리
+- HIT 전에도 원본과 같은 로그인 사용자 또는 공개 역할 read 권한을 재검사
+- 캐시 정책 버전을 `response-api-v3`로 상향해 이전 키 공간과 완전히 분리
+
+### Tests
+
+- 공개·로그인 사용자 키 격리, 브라우저 세션/XSRF 허용, 사용자 권한 실패 우회, 사용자별 MISS→HIT 회귀 검증
+
+## [0.3.0-beta.2] - 2026-09-01
+
+### Changed
+
+- 플러그인 전용 file/Redis 저장소와 저장소 선택 설정을 제거하고 G7 `CacheInterface`를 통해 관리자가 선택한 표준 캐시 저장소만 사용
+- 최소 지원 버전을 공식 G7 7.0.9, Page 1.1.0, Board 1.1.0, Ecommerce 1.2.0으로 정정
+- 공식 G7 7.0.9 동기 훅에서 active 동작을 허용하고, 별도 동일 트랜잭션 capability 부재는 doctor 경고로 표시
+- fill·제어면 동시성 잠금은 캐시 드라이버별 비표준 API 대신 기존 PowerCache DB state 테이블의 만료 lease로 통일
+
+### Removed
+
+- `store_driver`, `JW_POWER_CACHE_FILE_*`, `JW_POWER_CACHE_REDIS_*` 설정과 플러그인 전용 Redis 연결
+- 플러그인이 file 캐시 디렉터리를 직접 순회·삭제하는 GC 동작
+
+### Tests
+
+- 공식 G7 7.0.9 커밋에 고정한 PHP 8.2/8.5 CI와 표준 array/Redis `PluginCacheDriver` 제어면·DB lease lock 통합 검증
 
 ## [0.3.0-beta.1] - 2026-09-01
 

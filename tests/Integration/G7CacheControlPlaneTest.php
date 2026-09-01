@@ -2,18 +2,18 @@
 
 namespace Plugins\Jw\PowerCache\Tests\Integration;
 
-use Illuminate\Cache\RedisStore;
-use Illuminate\Cache\Repository as CacheRepository;
+use App\Extension\Cache\PluginCacheDriver;
 use Illuminate\Redis\RedisManager;
+use Illuminate\Support\Facades\DB;
 use Plugins\Jw\PowerCache\Invalidation\InvalidationApplier;
 use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Plugins\Jw\PowerCache\Store\ControlPlaneMissingException;
-use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
+use Plugins\Jw\PowerCache\Store\G7PowerCacheStore;
 use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 
-final class RedisControlPlaneTest extends PowerCacheTestCase
+final class G7CacheControlPlaneTest extends PowerCacheTestCase
 {
     public function test_selective_generation_loss_rotates_epoch_without_serving_generation_zero(): void
     {
@@ -34,7 +34,7 @@ final class RedisControlPlaneTest extends PowerCacheTestCase
             ], 3600);
             $store->advanceGenerations(['site'], 7);
 
-            $connection->command('del', [$prefix.'generation:'.hash('sha256', 'site')]);
+            $connection->command('del', [$prefix.'g7:plugin.jw-power_cache:generation:'.hash('sha256', 'site')]);
             try {
                 $store->generations(['site']);
                 self::fail('Missing Redis generation must block the HIT path.');
@@ -42,10 +42,7 @@ final class RedisControlPlaneTest extends PowerCacheTestCase
                 self::assertNotNull($store->getResponse('old-response'));
             }
 
-            $settings = new PowerCacheSettings([
-                'store_driver' => 'redis',
-                'automatic_recovery' => true,
-            ]);
+            $settings = new PowerCacheSettings(['automatic_recovery' => true]);
             $applier = new InvalidationApplier($repository, $store);
             $barrier = new RecoveryBarrier(
                 $repository,
@@ -59,45 +56,34 @@ final class RedisControlPlaneTest extends PowerCacheTestCase
             self::assertNotNull($result->snapshot);
             self::assertNotSame($initialSnapshot->runtimeEpoch, $result->snapshot->runtimeEpoch);
             self::assertSame(['site' => 0], $store->generations(['site']));
-            self::assertNotNull($store->getResponse('old-response'), 'Old payload may survive physically but is unreachable through the new epoch.');
+            self::assertNotNull($store->getResponse('old-response'));
         } finally {
-            $this->deleteKeys($connection, $prefix, [
-                'barrier:emergency-dirty',
-                'barrier:runtime-snapshot',
-                'generation:'.hash('sha256', 'site'),
-                'generation:'.hash('sha256', 'page:all'),
-                'generation:'.hash('sha256', 'category:tree'),
-                'generation:'.hash('sha256', 'board:all'),
-                'response:old-response',
-            ]);
-            $redis->purge('test');
+            $this->deletePrefix($connection, $prefix);
+            $redis->purge('jwpc_test');
         }
     }
 
-    public function test_redis_fill_lock_is_exclusive_and_recoverable(): void
+    public function test_database_fill_lock_is_exclusive_across_standard_cache_instances(): void
     {
         [$first, $redis, $connection, $prefix] = $this->redisStore();
-        $second = new LaravelPowerCacheStore($firstCache = $this->redisRepository($redis, $prefix), 'redis');
+        $second = new G7PowerCacheStore(new PluginCacheDriver('jw-power_cache', 'redis'));
 
         try {
             $owner = $first->acquireLock('same-request', 5);
             self::assertNotNull($owner);
             self::assertNull($second->acquireLock('same-request', 5));
-            $owner->release();
+            self::assertTrue($owner->release());
 
             $nextOwner = $second->acquireLock('same-request', 5);
             self::assertNotNull($nextOwner);
-            $nextOwner->release();
+            self::assertTrue($nextOwner->release());
         } finally {
-            $this->deleteKeys($connection, $prefix, [
-                'lock:'.hash('sha256', 'same-request'),
-            ]);
-            unset($firstCache);
-            $redis->purge('test');
+            $this->deletePrefix($connection, $prefix);
+            $redis->purge('jwpc_test');
         }
     }
 
-    public function test_redis_probe_reports_eviction_and_memory_diagnostics(): void
+    public function test_probe_uses_the_g7_selected_redis_store(): void
     {
         [$store, $redis, $connection, $prefix] = $this->redisStore();
 
@@ -106,17 +92,35 @@ final class RedisControlPlaneTest extends PowerCacheTestCase
 
             self::assertTrue($probe['ok']);
             self::assertSame('redis', $probe['driver']);
-            self::assertIsArray($probe['redis']);
-            self::assertNotSame('', (string) ($probe['redis']['maxmemory_policy'] ?? ''));
-            self::assertIsInt($probe['redis']['maxmemory_bytes']);
-            self::assertIsInt($probe['redis']['evicted_keys']);
+            self::assertSame(['ok', 'driver'], array_keys($probe));
         } finally {
-            $this->deleteKeys($connection, $prefix, []);
-            $redis->purge('test');
+            $this->deletePrefix($connection, $prefix);
+            $redis->purge('jwpc_test');
         }
     }
 
-    /** @return array{LaravelPowerCacheStore, RedisManager, mixed, string} */
+    public function test_expired_database_lease_can_be_replaced_without_old_owner_releasing_new_owner(): void
+    {
+        $first = $this->arrayStore();
+        $second = new G7PowerCacheStore(new PluginCacheDriver('jw-power_cache', 'array'));
+        $oldOwner = $first->acquireLock('expired-lock', 1);
+        self::assertNotNull($oldOwner);
+
+        $stateKey = 'lock:'.substr(hash('sha256', 'expired-lock'), 0, 59);
+        DB::table('jw_power_cache_state')->where('state_key', $stateKey)->update([
+            'state_value' => json_encode([
+                'owner' => $oldOwner->owner(),
+                'expires_at' => time() - 1,
+            ], JSON_THROW_ON_ERROR),
+        ]);
+
+        $newOwner = $second->acquireLock('expired-lock', 5);
+        self::assertNotNull($newOwner);
+        self::assertFalse($oldOwner->release());
+        self::assertTrue($newOwner->release());
+    }
+
+    /** @return array{G7PowerCacheStore, RedisManager, mixed, string} */
     private function redisStore(): array
     {
         $url = getenv('JW_POWER_CACHE_TEST_REDIS_URL');
@@ -125,37 +129,33 @@ final class RedisControlPlaneTest extends PowerCacheTestCase
         }
 
         $redis = new RedisManager($this->app, 'predis', [
-            'test' => ['url' => $url],
+            'jwpc_test' => ['url' => $url],
         ]);
         $prefix = 'jwpc-it:'.bin2hex(random_bytes(8)).':';
-        $repository = $this->redisRepository($redis, $prefix);
+        $this->app->instance('redis', $redis);
+        config([
+            'cache.default' => 'redis',
+            'cache.stores.redis' => [
+                'driver' => 'redis',
+                'connection' => 'jwpc_test',
+                'lock_connection' => 'jwpc_test',
+                'prefix' => $prefix,
+            ],
+        ]);
 
         return [
-            new LaravelPowerCacheStore($repository, 'redis'),
+            new G7PowerCacheStore(new PluginCacheDriver('jw-power_cache', 'redis')),
             $redis,
-            $redis->connection('test'),
+            $redis->connection('jwpc_test'),
             $prefix,
         ];
     }
 
-    private function redisRepository(RedisManager $redis, string $prefix): CacheRepository
+    private function deletePrefix(mixed $connection, string $prefix): void
     {
-        $store = new RedisStore($redis, $prefix, 'test');
-        $store->setLockConnection('test');
-
-        return new CacheRepository($store);
-    }
-
-    /** @param array<int, string> $keys */
-    private function deleteKeys(mixed $connection, string $prefix, array $keys): void
-    {
-        if ($keys === []) {
-            return;
+        $keys = $connection->command('keys', [$prefix.'*']);
+        if (is_array($keys) && $keys !== []) {
+            $connection->command('del', array_values($keys));
         }
-
-        $connection->command('del', array_map(
-            static fn (string $key): string => $prefix.$key,
-            $keys,
-        ));
     }
 }

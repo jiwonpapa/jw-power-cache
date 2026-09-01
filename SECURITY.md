@@ -17,4 +17,4 @@ We aim to acknowledge a report within 3 business days, provide a triage result w
 
 ## Security invariants
 
-Authenticated requests, cookie-bearing requests, unknown query parameters, unapproved middleware stacks, and unsafe response headers are always bypassed. Missing or malformed control-plane state blocks HIT delivery and rebuilds the control plane with a new runtime epoch.
+Authenticated page and category requests, unknown public cookies, unknown query parameters, unapproved middleware stacks, sensitive non-authentication tokens, and unsafe response headers are always bypassed. Board-list Bearer requests run after `optional.sanctum`: resolved users are keyed by authenticated user ID, while unresolved credentials use the public key and public read permission. Safe public board GET requests may carry only the standard G7 session/XSRF browser context. Missing or malformed control-plane state blocks HIT delivery and rebuilds the control plane with a new runtime epoch.

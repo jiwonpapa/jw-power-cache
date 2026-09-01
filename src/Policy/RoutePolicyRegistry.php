@@ -55,6 +55,8 @@ final class RoutePolicyRegistry
                     maxPage: 3,
                     maxPerPage: 50,
                     retentionSeconds: 600,
+                    cacheAuthenticatedUsers: true,
+                    allowBrowserSession: true,
                 )
                 : null,
             default => null,

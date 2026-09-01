@@ -6,6 +6,7 @@ use App\Contracts\Extension\ExtensionMiddlewareRegistryInterface;
 use App\Enums\PermissionType;
 use App\Models\Permission;
 use App\Models\Role;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Plugins\Jw\PowerCache\Eligibility\GuestEligibility;
 use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
@@ -15,7 +16,6 @@ use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 use Plugins\Jw\PowerCache\Keys\CanonicalRequestKey;
 use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
 use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
-use Plugins\Jw\PowerCache\Runtime\CoreCompatibility;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
@@ -23,11 +23,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class GuestResponseCacheTest extends PowerCacheTestCase
 {
-    public function test_active_mode_bypasses_when_core_transactional_hooks_are_unsupported(): void
+    public function test_active_mode_works_with_stock_g7_synchronous_hooks(): void
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_pages' => true,
             'automatic_recovery' => true,
             'metrics_enabled' => false,
@@ -51,7 +50,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             new RecoveryBarrier($repository, $store, $reconciler, $settings),
-            new CoreCompatibility(false),
         );
 
         $originCalls = 0;
@@ -62,14 +60,16 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
         });
 
         self::assertSame(1, $originCalls);
-        self::assertSame('BYPASS; reason=core_transactional_hooks', $response->headers->get('X-JW-Power-Cache'));
+        $second = $middleware->handle($this->request(), fn (): JsonResponse => new JsonResponse(['unexpected' => true]));
+
+        self::assertStringStartsWith('MISS-STORED', (string) $response->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('HIT', (string) $second->headers->get('X-JW-Power-Cache'));
     }
 
     public function test_public_board_list_hits_and_board_generation_invalidates_it(): void
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_board_lists' => true,
             'automatic_recovery' => true,
             'metrics_enabled' => false,
@@ -93,7 +93,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             new RecoveryBarrier($repository, $store, $reconciler, $settings),
-            new CoreCompatibility(true),
         );
         $makeRequest = function () {
             $request = $this->request(
@@ -140,11 +139,109 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
         self::assertStringStartsWith('MISS-STORED', (string) $third->headers->get('X-JW-Power-Cache'));
     }
 
+    public function test_authenticated_board_list_hits_are_isolated_per_user(): void
+    {
+        config()->set('session.cookie', 'g7-session');
+        $settings = new PowerCacheSettings([
+            'mode' => 'active',
+            'cache_public_board_lists' => true,
+            'automatic_recovery' => true,
+            'metrics_enabled' => false,
+            'debug_headers' => true,
+        ]);
+        $repository = $this->repository();
+        $store = $this->arrayStore();
+        $applier = new InvalidationApplier($repository, $store);
+        $reconciler = new OutboxReconciler($repository, $store, $applier);
+        $middleware = new GuestResponseCache(
+            $settings,
+            new RoutePolicyRegistry($settings),
+            new GuestEligibility(new class implements ExtensionMiddlewareRegistryInterface
+            {
+                public function resolveForRoute(string $routeName, string $path, string $group, string $timing): array
+                {
+                    return $timing === 'after_core' ? [GuestResponseCache::class] : [];
+                }
+            }),
+            new CanonicalRequestKey,
+            new ResponsePolicy,
+            $store,
+            new RecoveryBarrier($repository, $store, $reconciler, $settings),
+        );
+        $makeRequest = function (int $userId, bool $allowed = true): Request {
+            $request = $this->request(
+                routeName: 'api.modules.sirsoft-board.boards.posts.index',
+                middleware: [
+                    'api',
+                    'optional.sanctum',
+                    'throttle:600,1',
+                    'permission:user,sirsoft-board.{slug}.posts.read',
+                ],
+                uri: '/api/modules/sirsoft-board/boards/freebd/posts',
+                query: ['page' => '1'],
+                cookies: ['g7-session' => 'session-'.$userId, 'XSRF-TOKEN' => 'csrf'],
+                headers: [
+                    'Authorization' => 'Bearer token-'.$userId,
+                    'X-XSRF-TOKEN' => 'csrf',
+                    'User-Agent' => 'Mozilla/5.0 Macintosh',
+                ],
+                routePattern: 'api/modules/sirsoft-board/boards/{slug}/posts',
+            );
+            $request->setUserResolver(static fn () => new class($userId, $allowed)
+            {
+                public function __construct(
+                    private readonly int $id,
+                    private readonly bool $allowed,
+                ) {}
+
+                public function getAuthIdentifier(): int
+                {
+                    return $this->id;
+                }
+
+                public function hasPermission(string $permission, PermissionType $type): bool
+                {
+                    return $this->allowed
+                        && $permission === 'sirsoft-board.freebd.posts.read'
+                        && $type === PermissionType::User;
+                }
+            });
+
+            return $request;
+        };
+        $originCalls = 0;
+        $origin = function (Request $request) use (&$originCalls): JsonResponse {
+            $originCalls++;
+
+            return new JsonResponse([
+                'origin_call' => $originCalls,
+                'user_id' => $request->user()->getAuthIdentifier(),
+            ]);
+        };
+
+        $userOneFirst = $middleware->handle($makeRequest(101), $origin);
+        $userOneSecond = $middleware->handle($makeRequest(101), $origin);
+        $userTwoFirst = $middleware->handle($makeRequest(202), $origin);
+        $userTwoSecond = $middleware->handle($makeRequest(202), $origin);
+
+        self::assertSame(2, $originCalls);
+        self::assertStringStartsWith('MISS-STORED', (string) $userOneFirst->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('HIT', (string) $userOneSecond->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('MISS-STORED', (string) $userTwoFirst->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('HIT', (string) $userTwoSecond->headers->get('X-JW-Power-Cache'));
+        self::assertSame($userOneFirst->getContent(), $userOneSecond->getContent());
+        self::assertSame($userTwoFirst->getContent(), $userTwoSecond->getContent());
+        self::assertNotSame($userOneSecond->getContent(), $userTwoSecond->getContent());
+
+        $revokedUser = $middleware->handle($makeRequest(101, false), $origin);
+        self::assertSame(3, $originCalls);
+        self::assertStringStartsWith('BYPASS; reason=user_permission', (string) $revokedUser->headers->get('X-JW-Power-Cache'));
+    }
+
     public function test_miss_hit_and_generation_invalidation_flow(): void
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_pages' => true,
             'cache_public_categories' => true,
             'automatic_recovery' => true,
@@ -171,7 +268,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             $barrier,
-            new CoreCompatibility(true),
         );
 
         $originCalls = 0;
@@ -209,7 +305,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_pages' => true,
             'cache_public_categories' => true,
             'automatic_recovery' => true,
@@ -239,7 +334,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             $barrier,
-            new CoreCompatibility(true),
         );
         $request = $this->request();
         $snapshot = $repository->snapshot();

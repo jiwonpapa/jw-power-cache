@@ -88,7 +88,6 @@ final class Plugin extends AbstractPlugin
     {
         return [
             'mode' => $this->enumSetting('실행 모드', 'Mode', ['observe', 'active', 'bypass'], 'observe'),
-            'store_driver' => $this->enumSetting('저장소', 'Store driver', ['file', 'redis'], 'file'),
             'cache_public_pages' => $this->booleanSetting('공개 페이지 캐시', 'Cache public pages', true),
             'cache_public_categories' => $this->booleanSetting('공개 카테고리 캐시', 'Cache public categories', true),
             'cache_public_board_lists' => $this->booleanSetting('공개 게시판 목록 캐시', 'Cache public board lists', true),
@@ -124,7 +123,6 @@ final class Plugin extends AbstractPlugin
     {
         return [
             'mode' => 'observe',
-            'store_driver' => 'file',
             'cache_public_pages' => true,
             'cache_public_categories' => true,
             'cache_public_board_lists' => true,
