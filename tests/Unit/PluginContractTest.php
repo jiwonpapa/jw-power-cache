@@ -23,9 +23,13 @@ final class PluginContractTest extends TestCase
         // AbstractPlugin::getIdentifier()는 설치 디렉터리명에서 추론한다.
         // 독립 저장소 루트의 표시용 폴더명과 G7 설치 식별자를 분리해 검증한다.
         self::assertSame('jw-power_cache', $manifest['identifier']);
-        self::assertSame('0.3.0-beta.1', $plugin->getVersion());
+        self::assertSame('0.3.0-beta.2', $plugin->getVersion());
         self::assertSame('observe', $plugin->getConfigValues()['mode']);
-        self::assertSame('file', $plugin->getConfigValues()['store_driver']);
+        self::assertArrayNotHasKey('store_driver', $plugin->getConfigValues());
+        self::assertSame('>=7.0.9', $manifest['g7_version']);
+        self::assertSame('>=1.1.0', $manifest['dependencies']['modules']['sirsoft-page']);
+        self::assertSame('>=1.1.0', $manifest['dependencies']['modules']['sirsoft-board']);
+        self::assertSame('>=1.2.0', $manifest['dependencies']['modules']['sirsoft-ecommerce']);
 
         $middleware = $plugin->getMiddleware();
         self::assertCount(1, $middleware);
@@ -98,6 +102,28 @@ final class PluginContractTest extends TestCase
 
         foreach ($settings['frontend_schema'] as $name => $schema) {
             self::assertFalse($schema['expose'] ?? true, "{$name} must stay admin-only");
+        }
+    }
+
+    public function test_plugin_never_registers_or_reads_a_private_cache_store(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $source = '';
+        $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root.'/src'));
+        foreach ($iterator as $file) {
+            if ($file->isFile() && $file->getExtension() === 'php') {
+                $source .= file_get_contents($file->getPathname());
+            }
+        }
+
+        foreach ([
+            'Illuminate\\Support\\Facades\\Cache',
+            'jw_power_cache_file',
+            'jw_power_cache_redis',
+            'JW_POWER_CACHE_FILE_',
+            'JW_POWER_CACHE_REDIS_',
+        ] as $forbidden) {
+            self::assertStringNotContainsString($forbidden, $source);
         }
     }
 

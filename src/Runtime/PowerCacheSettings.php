@@ -16,17 +16,6 @@ final class PowerCacheSettings
         return in_array($mode, ['observe', 'active', 'bypass'], true) ? $mode : 'observe';
     }
 
-    public function storeDriver(): string
-    {
-        $driver = (string) $this->value('store_driver', 'file');
-        $allowed = ['file', 'redis'];
-        if (app()->environment('testing')) {
-            $allowed[] = 'array';
-        }
-
-        return in_array($driver, $allowed, true) ? $driver : 'file';
-    }
-
     public function publicPagesEnabled(): bool
     {
         return (bool) $this->value('cache_public_pages', true);

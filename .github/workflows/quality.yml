@@ -10,8 +10,8 @@ permissions:
   contents: read
 
 env:
-  G7_REPOSITORY: jiwonpapa/gnuboard7
-  G7_REF: 7d628dc4e57153a6217372a8a4bf8ea2904c680f
+  G7_REPOSITORY: gnuboard/g7
+  G7_REF: 56836a2b66c3bc4c3ae84ab1ae983248bb6d40b0
 
 concurrency:
   group: quality-${{ github.ref }}
@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} / G7 transaction seam
+    name: PHP ${{ matrix.php }} / official G7 7.0.9
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:

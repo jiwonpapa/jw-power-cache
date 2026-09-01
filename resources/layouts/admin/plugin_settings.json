@@ -86,26 +86,6 @@
                                                     },
                                                     { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.mode_hint" }
                                                 ]
-                                            },
-                                            {
-                                                "type": "basic",
-                                                "name": "Div",
-                                                "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.store_driver" },
-                                                    {
-                                                        "type": "composite",
-                                                        "name": "Select",
-                                                        "props": {
-                                                            "name": "store_driver",
-                                                            "className": "w-full",
-                                                            "options": [
-                                                                { "value": "file", "label": "file" },
-                                                                { "value": "redis", "label": "redis" }
-                                                            ]
-                                                        }
-                                                    },
-                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.store_driver_hint" }
-                                                ]
                                             }
                                         ]
                                     }
@@ -311,7 +291,6 @@
     },
     "schema": {
         "mode": { "type": "enum", "options": ["observe", "active", "bypass"], "default": "observe" },
-        "store_driver": { "type": "enum", "options": ["file", "redis"], "default": "file" },
         "cache_public_pages": { "type": "boolean", "default": true },
         "cache_public_categories": { "type": "boolean", "default": true },
         "cache_public_board_lists": { "type": "boolean", "default": true },

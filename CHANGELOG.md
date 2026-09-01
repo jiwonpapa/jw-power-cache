@@ -7,6 +7,24 @@
 - 승인된 원격 G7의 기존 모드를 복원하며 5VU 혼합·경로별 3회 비교를 재현하는 실서버 벤치마크 도구
 - g7devops.com 공개 HTTPS에서 수집한 총 2,880건의 원시 결과, 서버 telemetry, 3회 중앙값 보고서
 
+## [0.3.0-beta.2] - 2026-09-01
+
+### Changed
+
+- 플러그인 전용 file/Redis 저장소와 저장소 선택 설정을 제거하고 G7 `CacheInterface`를 통해 관리자가 선택한 표준 캐시 저장소만 사용
+- 최소 지원 버전을 공식 G7 7.0.9, Page 1.1.0, Board 1.1.0, Ecommerce 1.2.0으로 정정
+- 공식 G7 7.0.9 동기 훅에서 active 동작을 허용하고, 별도 동일 트랜잭션 capability 부재는 doctor 경고로 표시
+- fill·제어면 동시성 잠금은 캐시 드라이버별 비표준 API 대신 기존 PowerCache DB state 테이블의 만료 lease로 통일
+
+### Removed
+
+- `store_driver`, `JW_POWER_CACHE_FILE_*`, `JW_POWER_CACHE_REDIS_*` 설정과 플러그인 전용 Redis 연결
+- 플러그인이 file 캐시 디렉터리를 직접 순회·삭제하는 GC 동작
+
+### Tests
+
+- 공식 G7 7.0.9 커밋에 고정한 PHP 8.2/8.5 CI와 표준 array/Redis `PluginCacheDriver` 제어면·DB lease lock 통합 검증
+
 ## [0.3.0-beta.1] - 2026-09-01
 
 ### Added

@@ -15,7 +15,6 @@ use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 use Plugins\Jw\PowerCache\Keys\CanonicalRequestKey;
 use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
 use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
-use Plugins\Jw\PowerCache\Runtime\CoreCompatibility;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
@@ -23,11 +22,10 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class GuestResponseCacheTest extends PowerCacheTestCase
 {
-    public function test_active_mode_bypasses_when_core_transactional_hooks_are_unsupported(): void
+    public function test_active_mode_works_with_stock_g7_synchronous_hooks(): void
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_pages' => true,
             'automatic_recovery' => true,
             'metrics_enabled' => false,
@@ -51,7 +49,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             new RecoveryBarrier($repository, $store, $reconciler, $settings),
-            new CoreCompatibility(false),
         );
 
         $originCalls = 0;
@@ -62,14 +59,16 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
         });
 
         self::assertSame(1, $originCalls);
-        self::assertSame('BYPASS; reason=core_transactional_hooks', $response->headers->get('X-JW-Power-Cache'));
+        $second = $middleware->handle($this->request(), fn (): JsonResponse => new JsonResponse(['unexpected' => true]));
+
+        self::assertStringStartsWith('MISS-STORED', (string) $response->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('HIT', (string) $second->headers->get('X-JW-Power-Cache'));
     }
 
     public function test_public_board_list_hits_and_board_generation_invalidates_it(): void
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_board_lists' => true,
             'automatic_recovery' => true,
             'metrics_enabled' => false,
@@ -93,7 +92,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             new RecoveryBarrier($repository, $store, $reconciler, $settings),
-            new CoreCompatibility(true),
         );
         $makeRequest = function () {
             $request = $this->request(
@@ -144,7 +142,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_pages' => true,
             'cache_public_categories' => true,
             'automatic_recovery' => true,
@@ -171,7 +168,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             $barrier,
-            new CoreCompatibility(true),
         );
 
         $originCalls = 0;
@@ -209,7 +205,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
     {
         $settings = new PowerCacheSettings([
             'mode' => 'active',
-            'store_driver' => 'array',
             'cache_public_pages' => true,
             'cache_public_categories' => true,
             'automatic_recovery' => true,
@@ -239,7 +234,6 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             $barrier,
-            new CoreCompatibility(true),
         );
         $request = $this->request();
         $snapshot = $repository->snapshot();

@@ -2,8 +2,7 @@
 
 namespace Plugins\Jw\PowerCache\Tests\Feature;
 
-use Illuminate\Cache\ArrayStore;
-use Illuminate\Cache\Repository as CacheRepository;
+use App\Extension\Cache\PluginCacheDriver;
 use Illuminate\Contracts\Cache\Lock;
 use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Plugins\Jw\PowerCache\Invalidation\InvalidationApplier;
@@ -13,7 +12,7 @@ use Plugins\Jw\PowerCache\Runtime\ControlBarrierState;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
-use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
+use Plugins\Jw\PowerCache\Store\G7PowerCacheStore;
 use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 use RuntimeException;
 
@@ -136,8 +135,8 @@ final class OutboxRecoveryTest extends PowerCacheTestCase
     public function test_missing_generation_rotates_epoch_before_control_plane_is_rebuilt(): void
     {
         $repository = $this->repository();
-        $cache = new CacheRepository(new ArrayStore(true));
-        $store = new LaravelPowerCacheStore($cache, 'array');
+        $cache = new PluginCacheDriver('jw-power_cache', 'array');
+        $store = new G7PowerCacheStore($cache);
         $initialSnapshot = $repository->snapshot();
         $token = $store->markEmergencyDirty('bootstrap', 'bootstrap');
         self::assertTrue($store->resetControlPlane(
@@ -148,7 +147,6 @@ final class OutboxRecoveryTest extends PowerCacheTestCase
 
         $cache->forget('generation:'.hash('sha256', 'site'));
         $settings = new PowerCacheSettings([
-            'store_driver' => 'array',
             'automatic_recovery' => true,
         ]);
         $applier = new InvalidationApplier($repository, $store);
@@ -173,7 +171,6 @@ final class OutboxRecoveryTest extends PowerCacheTestCase
         $store->markEmergencyDirty('outbox_pending:'.$eventId, 'event:'.$eventId, $eventId);
 
         $settings = new PowerCacheSettings([
-            'store_driver' => 'array',
             'automatic_recovery' => true,
             'recovery_batch' => 100,
         ]);

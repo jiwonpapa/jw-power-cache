@@ -5,7 +5,6 @@
     },
     "defaults": {
         "mode": "observe",
-        "store_driver": "file",
         "cache_public_pages": true,
         "cache_public_categories": true,
         "cache_public_board_lists": true,
@@ -20,7 +19,6 @@
     },
     "frontend_schema": {
         "mode": { "expose": false },
-        "store_driver": { "expose": false },
         "cache_public_pages": { "expose": false },
         "cache_public_categories": { "expose": false },
         "cache_public_board_lists": { "expose": false },

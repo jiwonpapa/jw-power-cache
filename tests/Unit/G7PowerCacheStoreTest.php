@@ -2,14 +2,13 @@
 
 namespace Plugins\Jw\PowerCache\Tests\Unit;
 
-use Illuminate\Cache\ArrayStore;
-use Illuminate\Cache\Repository as CacheRepository;
+use App\Extension\Cache\PluginCacheDriver;
 use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 use Plugins\Jw\PowerCache\Store\ControlPlaneMissingException;
-use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
+use Plugins\Jw\PowerCache\Store\G7PowerCacheStore;
 use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 
-final class LaravelPowerCacheStoreTest extends PowerCacheTestCase
+final class G7PowerCacheStoreTest extends PowerCacheTestCase
 {
     public function test_generation_advance_is_monotonic_and_idempotent(): void
     {
@@ -48,8 +47,8 @@ final class LaravelPowerCacheStoreTest extends PowerCacheTestCase
 
     public function test_missing_generation_is_never_interpreted_as_generation_zero(): void
     {
-        $cache = new CacheRepository(new ArrayStore(true));
-        $store = new LaravelPowerCacheStore($cache, 'array');
+        $cache = new PluginCacheDriver('jw-power_cache', 'array');
+        $store = new G7PowerCacheStore($cache);
         $snapshot = $this->repository()->snapshot();
         $token = $store->markEmergencyDirty('bootstrap', 'bootstrap');
         self::assertTrue($store->resetControlPlane($snapshot, ['site'], $token));
