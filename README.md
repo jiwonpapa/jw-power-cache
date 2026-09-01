@@ -48,6 +48,17 @@ G7 코어가 동일 트랜잭션 훅 capability를 제공하지 않으면 doctor
 https://github.com/jiwonpapa/jw-power-cache
 ```
 
+공식 G7 7.0.10 전 Beta 평가는 이동 가능한 브랜치 이름만 믿지 말고 검증된 코어 커밋을 정확히 고정하십시오.
+
+```bash
+git clone --branch codex/power-cache-transaction-seam \
+  https://github.com/jiwonpapa/gnuboard7.git gnuboard7-power-cache
+cd gnuboard7-power-cache
+git checkout --detach 7d628dc4e57153a6217372a8a4bf8ea2904c680f
+```
+
+다른 G7 커밋에서는 `power-cache:doctor`가 동일 트랜잭션 훅 capability를 확인하기 전까지 `active`로 전환하지 마십시오.
+
 개발 환경에서 번들 소스로 설치하려면 저장소를 G7의 `_bundled` 디렉터리에 복제합니다.
 
 먼저 운영 저장소를 선택하고 환경변수를 적용합니다. 기본 file 드라이버를 사용할 때는 아래의 단일 노드 조건을 확인한 뒤 `JW_POWER_CACHE_FILE_SINGLE_NODE=true`를 설정해야 최초 `doctor`가 제어면을 안전하게 초기화합니다. 다중 노드는 아래 Redis 설정을 먼저 적용하십시오.
