@@ -33,7 +33,7 @@ final class CanonicalRequestKey
 
         $payload = [
             'format' => (int) config('jw_power_cache.format_version', 1),
-            'policy_version' => (string) config('jw_power_cache.policy_version', 'guest-api-v1'),
+            'policy_version' => (string) config('jw_power_cache.policy_version', 'response-api-v3'),
             'policy' => $policy->id,
             'site' => $snapshot->siteId,
             'epoch' => $snapshot->runtimeEpoch,
@@ -45,6 +45,9 @@ final class CanonicalRequestKey
             'locale' => $locale,
             'timezone' => $timezone,
             'device_class' => $policy->varyByDeviceClass ? $this->deviceClass($request) : null,
+            'user_variant' => $policy->cacheAuthenticatedUsers
+                ? $this->userVariant($request)
+                : null,
             'clock_bucket' => $policy->clockBucketSeconds !== null
                 ? intdiv(time(), max(1, $policy->clockBucketSeconds))
                 : null,
@@ -83,6 +86,25 @@ final class CanonicalRequestKey
             '/Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i',
             (string) $request->userAgent(),
         ) === 1 ? 'mobile' : 'desktop';
+    }
+
+    private function userVariant(Request $request): string
+    {
+        $user = $request->user();
+        if ($user === null) {
+            return 'public';
+        }
+
+        if (! method_exists($user, 'getAuthIdentifier')) {
+            throw new \UnexpectedValueException('Authenticated user does not expose a stable identifier.');
+        }
+
+        $identifier = $user->getAuthIdentifier();
+        if (! is_string($identifier) && ! is_int($identifier)) {
+            throw new \UnexpectedValueException('Authenticated user identifier must be a string or integer.');
+        }
+
+        return 'user:'.$identifier;
     }
 
     /** @return array<string|int, mixed> */

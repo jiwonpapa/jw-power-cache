@@ -2,7 +2,7 @@
 
 ## Request path
 
-Eligible guest requests pass an explicit route and presentation contract. Active mode reads a clean control barrier, runtime snapshot, generation vector, and cached response. Any missing, malformed, dirty, or mismatched state becomes a MISS/BYPASS; it is never interpreted as generation zero.
+Eligible requests pass an explicit route and presentation contract. Public board requests use a public key; authenticated board requests use a user-ID-isolated key and repeat the original read-permission check before HIT delivery. Active mode reads a clean control barrier, runtime snapshot, generation vector, and cached response. Any missing, malformed, dirty, or mismatched state becomes a MISS/BYPASS; it is never interpreted as generation zero.
 
 ## Mutation path
 

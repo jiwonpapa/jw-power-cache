@@ -1,7 +1,7 @@
 {
     "settings": {
         "title": "JW PowerCache Settings",
-        "description": "Caches only verified guest public APIs with generation invalidation. Start in observe mode.",
+        "description": "Caches verified public APIs and user-isolated board lists with generation invalidation. Start in observe mode.",
         "safety_notice": "Run php artisan power-cache:doctor before active mode. Cache uses the system store selected by the G7 administrator.",
         "sections": {
             "operation": "Operation",
@@ -14,7 +14,7 @@
             "mode_hint": "Observe records eligibility without storing or serving HITs; only active serves cache.",
             "cache_public_pages": "Public page details",
             "cache_public_categories": "Public ecommerce category tree and details",
-            "cache_public_board_lists": "Public guest board lists (pages 1-3)",
+            "cache_public_board_lists": "Public board lists (pages 1-3)",
             "automatic_recovery": "Automatically recover pending outbox events",
             "metrics_enabled": "Record cache state metrics",
             "debug_headers": "X-JW-Power-Cache debug header",

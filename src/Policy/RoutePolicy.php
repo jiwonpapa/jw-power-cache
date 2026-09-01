@@ -23,5 +23,7 @@ final readonly class RoutePolicy
         public ?int $maxPage = null,
         public ?int $maxPerPage = null,
         public ?int $retentionSeconds = null,
+        public bool $cacheAuthenticatedUsers = false,
+        public bool $allowBrowserSession = false,
     ) {}
 }

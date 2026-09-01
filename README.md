@@ -6,13 +6,13 @@
 
 **Gnuboard 7 공개 API를 더 빠르게 제공하는 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
 
-현재 버전은 `0.3.0-beta.2 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
+현재 버전은 `0.3.0-beta.3 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
 
 ## 플러그인 용도
 
-- 로그인하지 않은 방문자가 반복 조회하는 공개 JSON API의 응답속도 개선
+- 방문자가 반복 조회하는 공개 JSON API와 로그인 사용자의 게시판 목록 응답속도 개선
 - 페이지·상품·게시글 변경 시 TTL 대기 없이 관련 캐시 즉시 무효화
-- 인증·쿠키·민감 헤더가 있는 요청은 캐시하지 않고 원본으로 우회
+- 로그인 게시판 목록은 사용자별 키로 격리하고 매 요청 읽기 권한 재검사
 - 캐시 장애 시 사이트 오류를 만들지 않고 원본 응답으로 fail-open
 - 별도 저장소를 만들지 않고 **G7 관리자가 선택한 표준 캐시 저장소** 사용
 
@@ -40,16 +40,18 @@
 |---|---|
 | 공개 페이지 상세 | `api.modules.sirsoft-page.pages.show` |
 | 쇼핑몰 공개 카테고리 | `categories.index`, `categories.show` |
-| 공개 게시판 목록 | 공개 read 권한 게시판의 1~3페이지, `per_page` 최대 50 |
-| 인증 요청 | 항상 BYPASS |
-| 쿠키·미등록 query·미등록 route middleware | 항상 BYPASS |
+| 공개 게시판 목록 | 공개·로그인 사용자 모두 1~3페이지, `per_page` 최대 50 |
+| 로그인 게시판 목록 | 사용자 ID별 응답 격리, read 권한 매 요청 재검사 |
+| 페이지·카테고리 인증 요청 | BYPASS |
+| 일반 브라우저 세션·XSRF | 게시판 안전 GET에서 허용 |
+| 미등록 cookie·query·route middleware | BYPASS |
 | 게시글 상세·상품·검색·장바구니·주문 | 현재 캐시하지 않음 |
 | 응답 형식 | 200 JSON, 크기 상한 이내 |
 | 저장 금지 | Set-Cookie, no-store, redirect, 인증/다운로드 헤더, 미지원 Vary |
 
 카테고리 트리에 공개 상품 수가 포함되므로 카테고리뿐 아니라 상품 생성·수정·삭제·일괄 변경도 `category:tree` 세대를 회전합니다.
 
-게시판 목록은 원본 `permission:user,sirsoft-board.{slug}.posts.read`와 같은 `GuestRoleResolver`로 공개 접근 권한을 먼저 확인합니다. 글·댓글·첨부·게시판 설정·권한·작성자 표시가 바뀌면 `board:all` 세대를 즉시 회전합니다. `created_at_formatted`, `is_new`, 조회수처럼 DB 쓰기 없이도 표시가 변하는 값만 60초 시계 버킷으로 제한하며, 콘텐츠 신선도는 계속 변경 훅 무효화가 담당합니다. PC/모바일 `per_page` 차이는 별도 키로 격리합니다.
+게시판 목록은 원본 `permission:user,sirsoft-board.{slug}.posts.read`와 같은 권한을 HIT 전에도 확인합니다. 공개 요청은 공개 키, 로그인 요청은 사용자 ID별 키로 격리해 `is_author`와 `abilities`가 다른 사용자에게 섞이지 않습니다. 글·댓글·첨부·게시판 설정·권한·작성자 표시가 바뀌면 `board:all` 세대를 즉시 회전합니다. `created_at_formatted`, `is_new`, 조회수처럼 DB 쓰기 없이도 표시가 변하는 값만 60초 시계 버킷으로 제한하며, PC/모바일 `per_page` 차이도 별도 키로 격리합니다.
 
 ## 정합성 모델
 
@@ -150,10 +152,12 @@ php tool/run-backup-restore-drill.php
 다음 항목은 관리자 설정으로 완화할 수 없습니다.
 
 - GET/HEAD 및 정확한 route allowlist만 허용
-- Authorization/Proxy-Authorization와 민감 토큰 헤더가 있으면 BYPASS
-- 사용자 객체나 쿠키가 하나라도 있으면 BYPASS
+- Proxy-Authorization와 주문·장바구니·미리보기·서명 토큰 헤더가 있으면 BYPASS
+- Authorization은 인증 사용자가 확정된 게시판 목록만 허용하고 사용자별 키로 격리
+- 공개 게시판 GET의 표준 세션·XSRF만 허용하며 알 수 없는 쿠키는 BYPASS
+- 페이지·카테고리의 인증 요청은 BYPASS
 - route 정책에 없는 query/middleware가 있으면 BYPASS
-- 게시판 목록은 원본과 같은 guest read 권한 선검증 실패 시 BYPASS
+- 게시판 목록은 공개·로그인 사용자 모두 원본과 같은 read 권한 선검증 실패 시 BYPASS
 - 게시판 목록은 1~3페이지·`per_page` 최대 50만 허용하고 PC/모바일 키를 분리
 - 같은 route에 다른 before_core/after_core 확장 미들웨어가 겹치면 BYPASS
 - 공개 응답을 변형하는 origin filter hook이 등록되어 있으면 BYPASS
@@ -167,13 +171,13 @@ php tool/run-backup-restore-drill.php
 ## 알려진 제한
 
 - 현재 실제 HIT 지원은 페이지 상세, 카테고리 API, 공개 게시판 hot-list입니다.
-- 캐시 HIT는 extension `api, after_core` 지점에서 반환됩니다. Laravel 미들웨어 우선순위상 `optional.sanctum`과 throttle은 HIT 전에도 실행되며, 게시판 route permission은 뒤쪽에 있어 플러그인이 같은 `GuestRoleResolver`로 먼저 검사합니다. 이 순서를 doctor의 정확한 middleware 계약으로 고정합니다.
-- `after_core` 앞에서 실행되는 코어 API 미들웨어와 rate-limit 비용은 남습니다. runtime barrier와 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 guest role/permission을 요청당 한 번 읽습니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV·rate-limit 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
+- 캐시 HIT는 extension `api, after_core` 지점에서 반환됩니다. `optional.sanctum`과 throttle은 HIT 전에도 실행되며, 게시판 route permission은 뒤쪽에 있어 플러그인이 동일 권한을 먼저 검사합니다. 이 순서를 doctor의 정확한 middleware 계약으로 고정합니다.
+- `after_core` 앞에서 실행되는 코어 API 미들웨어와 rate-limit 비용은 남습니다. 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 공개 역할 또는 로그인 사용자 권한을 요청당 확인합니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV·rate-limit 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
 - 직접 SQL 변경을 자동 감지할 수 없습니다.
 - 공식 G7 7.0.9의 커밋 후 훅에는 앞서 설명한 짧은 비원자 구간이 남습니다.
 - 사이트 전역 설정·확장 생명주기는 아직 동일 트랜잭션 seam 대상이 아니므로 유지보수 중 bypass와 완료 후 site purge가 필요합니다.
 - 다중 노드에서 G7 관리자가 file 저장소를 선택한 구성은 지원하지 않습니다.
-- 전체 페이지 HTML, 바이너리, 검색 결과, 사용자별 응답은 지원하지 않습니다.
+- 전체 페이지 HTML, 바이너리, 검색 결과와 게시판 목록 외 사용자별 응답은 지원하지 않습니다.
 - PHP/Laravel 부팅 전 캐시는 별도 서버 어댑터 범위입니다.
 
 ## 검증
@@ -186,7 +190,7 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 공식 G7 7.0.9·MySQL 8.4·Redis 7.4 독립 테스트는 **52 tests / 438 assertions / 2 optional-seam skips**입니다. 공개 요청 격리, 공식 G7 표준 캐시 계약, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox commit/rollback, 저장소 장애와 outbox 자동 재생, 복구 후 epoch 회전·제어면 재구축, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 공식 G7 7.0.9 로컬 회귀 테스트는 **58 tests / 443 assertions / 5 environment skips**입니다. 공개·로그인 사용자 키 격리, 브라우저 세션/XSRF, 게시판 read 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 outbox commit/rollback, 저장소 장애와 자동 복구, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 공개 HTTPS에서 수행한 최신 5VU 비교 결과는 [g7devops.com 실서버 벤치마크](docs/benchmark/g7devops-live-5vu-2026-09-01.md)에 기록되어 있습니다. 4개 주요 API, 총 2,880건에서 오류·응답 불일치 없이 경로별 p95가 49.0~68.9% 개선됐습니다.
 
