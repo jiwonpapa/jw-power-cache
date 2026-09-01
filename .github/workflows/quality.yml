@@ -35,10 +35,10 @@ jobs:
           --health-retries 10
     steps:
       - name: Checkout JW PowerCache
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Checkout Gnuboard 7
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: gnuboard/g7
           ref: ${{ matrix.g7 }}
@@ -81,18 +81,22 @@ jobs:
         database:
           - name: MySQL 8.4
             image: mysql:8.4
+            health_cmd: mysqladmin ping -h 127.0.0.1 -proot
           - name: MariaDB 11.4
             image: mariadb:11.4
+            health_cmd: mariadb-admin ping -h 127.0.0.1 -proot
     services:
       database:
         image: ${{ matrix.database.image }}
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: jw_power_cache_test
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: jw_power_cache_test
         ports:
           - 3306:3306
         options: >-
-          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-cmd "${{ matrix.database.health_cmd }}"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 20
@@ -107,10 +111,10 @@ jobs:
           --health-retries 10
     steps:
       - name: Checkout JW PowerCache
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Checkout supported Gnuboard
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: gnuboard/g7
           ref: 7.0.9
