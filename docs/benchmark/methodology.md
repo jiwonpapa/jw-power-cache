@@ -57,4 +57,24 @@ tool/run-benchmark-matrix.sh /path/to/gnuboard7 http://127.0.0.1:18087
 
 Every comparison fails closed when the BYPASS and ACTIVE per-route SHA-256 response sets differ. Raw result files retain checksum counts so the correctness decision is independently inspectable.
 
+## Concurrent fault campaign
+
+Run the mutation and recovery gate against an isolated G7 instance through its production-equivalent HTTP stack. The campaign creates a temporary published page through the official `PageService`, overlaps requests with a committed update and scoped purge, deletes the `page:all` generation key, restarts Redis, and then removes its fixture. It fails on any non-200 response, stale token, public response containing personalized fields, missing outbox advance, missing epoch rotation, failed Redis recovery, or incomplete cleanup.
+
+The Redis container must have `AutoRemove=false`; the tool refuses `docker run --rm` containers so restart cannot accidentally turn into permanent container removal. The exact container name is validated and passed to Docker without a shell.
+
+```bash
+JWPC_BENCH_ISOLATED=1 \
+tool/run-fault-campaign.php \
+  --g7-root=/path/to/gnuboard7 \
+  --base-url=http://127.0.0.1:18088 \
+  --redis-container=jwpc-test-redis \
+  --duration=900 \
+  --concurrency=16 \
+  --rps=8 \
+  --output=/new/evidence/path/fault-campaign.json
+```
+
+The default 8 requests/second stays below the page route's 600 requests/minute guest limit while preserving concurrent batches. Repeat at concurrency 1, 4, 16, and 32 on the release candidate; a single 15-minute run is evidence for that concurrency only.
+
 The 2026-08-23 online A/B is a direction and smoke result, not the final Beta endurance gate. Its board route nevertheless meets the primary latency and throughput target with zero errors.

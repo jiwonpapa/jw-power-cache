@@ -1,6 +1,6 @@
 # Roadmap and release gates
 
-## Current: 0.3.0-alpha.2 Technical Preview
+## Current: 0.3.0-alpha.3 Technical Preview
 
 - conservative public guest API allowlist;
 - durable invalidation outbox and generation cache;

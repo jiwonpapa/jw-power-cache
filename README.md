@@ -2,7 +2,7 @@
 
 JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효화로 가속하는 Gnuboard 7 플러그인입니다. 데이터 신선도를 TTL에 맡기지 않고, 변경 훅이 실행되면 내구성 있는 outbox를 기록한 뒤 캐시 세대를 회전합니다.
 
-현재 버전은 `0.3.0-alpha.2 Technical Preview`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. G7 7.0.10의 공식 동일 트랜잭션 mutation 훅 계약을 요구합니다.
+현재 버전은 `0.3.0-alpha.3 Technical Preview`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. G7 7.0.10의 공식 동일 트랜잭션 mutation 훅 계약을 요구합니다.
 
 ## 현재 지원 범위
 

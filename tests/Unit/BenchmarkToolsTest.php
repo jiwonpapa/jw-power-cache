@@ -60,6 +60,25 @@ final class BenchmarkToolsTest extends TestCase
         self::assertTrue($result['results']['4']['checks']['response_checksum']);
     }
 
+    public function test_fault_campaign_requires_explicit_isolation_acknowledgement(): void
+    {
+        $previous = getenv('JWPC_BENCH_ISOLATED');
+        putenv('JWPC_BENCH_ISOLATED');
+
+        try {
+            $command = escapeshellarg(PHP_BINARY).' '
+                .escapeshellarg(dirname(__DIR__, 2).'/tool/run-fault-campaign.php').' 2>&1';
+            exec($command, $output, $status);
+        } finally {
+            $previous === false
+                ? putenv('JWPC_BENCH_ISOLATED')
+                : putenv('JWPC_BENCH_ISOLATED='.$previous);
+        }
+
+        self::assertSame(2, $status);
+        self::assertStringContainsString('JWPC_BENCH_ISOLATED=1 is required', implode("\n", $output));
+    }
+
     private function writeResult(string $filename, float $p95, float $requestsPerSecond, string $checksum): string
     {
         $metrics = [

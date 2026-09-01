@@ -71,6 +71,12 @@ jobs:
       - name: Check code style
         run: g7/vendor/bin/pint --test src tests database tool plugin.php
 
+      - name: Verify release archive contract
+        if: matrix.php == '8.5'
+        env:
+          JWPC_RELEASE_VERIFY_ONLY: '1'
+        run: tool/build-release.sh
+
       - name: Run unit, feature, and Redis integration tests
         env:
           G7_ROOT: ${{ github.workspace }}/g7

@@ -2,14 +2,19 @@
 
 ## [Unreleased]
 
+## [0.3.0-alpha.3] - 2026-09-01
+
 ### Added
 
 - 고정 RPS 내구성 및 요청 수 제한 무제한 성능 매트릭스를 실행하는 재현 가능한 혼합·지정 경로 부하 도구
 - 3회 중앙값, 동시성별 p95·처리량·오류율, BYPASS/ACTIVE 경로별 응답 체크섬을 fail-closed 판정하는 벤치마크 요약기
+- 공식 서비스 mutation·purge·선택적 제어 키 유실·Redis 재시작을 HTTP 부하와 겹쳐 stale·개인화·복구·정리 상태를 판정하는 장애 캠페인
 
 ### Changed
 
 - 실제 미들웨어 실행 순서에 맞춰 HIT에서도 optional auth·throttle이 유지되는 운영 제한을 명확화
+- 릴리스 빌드가 테스트·CI·도구·환경파일 포함을 거부하고 필수 런타임 파일·manifest 버전·ZIP 무결성을 검증하도록 강화
+- 실제 배포 ZIP은 태그가 정확히 HEAD를 가리키고 tracked worktree가 깨끗할 때만 생성하며, CI는 명시적인 dry-run 모드로 계약을 검증
 
 ## [0.3.0-alpha.2] - 2026-09-01
 
