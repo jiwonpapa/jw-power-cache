@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="docs/assets/jw-powercache-intro.webp" alt="JW PowerCache - Gnuboard 7 guest API cache" width="100%">
+  <img src="docs/assets/jw-powercache-intro.webp" alt="JW PowerCache - Gnuboard 7 API response cache" width="100%">
 </p>
 
 # JW PowerCache
 
-**Gnuboard 7 공개 API를 더 빠르게 제공하는 비회원 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
+**Gnuboard 7 공개 API를 더 빠르게 제공하는 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
 
 현재 버전은 `0.3.0-beta.2 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
 
@@ -40,7 +40,7 @@
 |---|---|
 | 공개 페이지 상세 | `api.modules.sirsoft-page.pages.show` |
 | 쇼핑몰 공개 카테고리 | `categories.index`, `categories.show` |
-| 공개 게시판 목록 | 비회원 read 권한 게시판의 1~3페이지, `per_page` 최대 50 |
+| 공개 게시판 목록 | 공개 read 권한 게시판의 1~3페이지, `per_page` 최대 50 |
 | 인증 요청 | 항상 BYPASS |
 | 쿠키·미등록 query·미등록 route middleware | 항상 BYPASS |
 | 게시글 상세·상품·검색·장바구니·주문 | 현재 캐시하지 않음 |
@@ -166,7 +166,7 @@ php tool/run-backup-restore-drill.php
 
 ## 알려진 제한
 
-- 현재 실제 HIT 지원은 페이지 상세, 카테고리 API, 공개 비회원 게시판 hot-list입니다.
+- 현재 실제 HIT 지원은 페이지 상세, 카테고리 API, 공개 게시판 hot-list입니다.
 - 캐시 HIT는 extension `api, after_core` 지점에서 반환됩니다. Laravel 미들웨어 우선순위상 `optional.sanctum`과 throttle은 HIT 전에도 실행되며, 게시판 route permission은 뒤쪽에 있어 플러그인이 같은 `GuestRoleResolver`로 먼저 검사합니다. 이 순서를 doctor의 정확한 middleware 계약으로 고정합니다.
 - `after_core` 앞에서 실행되는 코어 API 미들웨어와 rate-limit 비용은 남습니다. runtime barrier와 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 guest role/permission을 요청당 한 번 읽습니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV·rate-limit 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
 - 직접 SQL 변경을 자동 감지할 수 없습니다.

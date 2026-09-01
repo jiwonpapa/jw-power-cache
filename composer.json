@@ -1,6 +1,6 @@
 {
     "name": "plugins/jw-power_cache",
-    "description": "Generation-safe guest response cache for Gnuboard 7",
+    "description": "Generation-safe response cache for public Gnuboard 7 APIs",
     "type": "library",
     "license": "MIT",
     "keywords": ["gnuboard7", "cache", "redis", "performance"],
