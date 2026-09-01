@@ -9,20 +9,23 @@ on:
 permissions:
   contents: read
 
+env:
+  G7_REPOSITORY: jiwonpapa/gnuboard7
+  G7_REF: codex/power-cache-transaction-seam
+
 concurrency:
   group: quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} / G7 ${{ matrix.g7 }}
+    name: PHP ${{ matrix.php }} / G7 transaction seam
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         php: ['8.2', '8.5']
-        g7: ['7.0.8', '7.0.9']
     services:
       redis:
         image: redis:7.4-alpine
@@ -40,8 +43,8 @@ jobs:
       - name: Checkout Gnuboard 7
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          repository: gnuboard/g7
-          ref: ${{ matrix.g7 }}
+          repository: ${{ env.G7_REPOSITORY }}
+          ref: ${{ env.G7_REF }}
           path: g7
 
       - name: Set up PHP
@@ -116,8 +119,8 @@ jobs:
       - name: Checkout supported Gnuboard
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          repository: gnuboard/g7
-          ref: 7.0.9
+          repository: ${{ env.G7_REPOSITORY }}
+          ref: ${{ env.G7_REF }}
           path: g7
 
       - name: Set up PHP

@@ -15,6 +15,7 @@ use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 use Plugins\Jw\PowerCache\Keys\CanonicalRequestKey;
 use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
 use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
+use Plugins\Jw\PowerCache\Runtime\CoreCompatibility;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
@@ -22,6 +23,48 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class GuestResponseCacheTest extends PowerCacheTestCase
 {
+    public function test_active_mode_bypasses_when_core_transactional_hooks_are_unsupported(): void
+    {
+        $settings = new PowerCacheSettings([
+            'mode' => 'active',
+            'store_driver' => 'array',
+            'cache_public_pages' => true,
+            'automatic_recovery' => true,
+            'metrics_enabled' => false,
+            'debug_headers' => true,
+        ]);
+        $repository = $this->repository();
+        $store = $this->arrayStore();
+        $applier = new InvalidationApplier($repository, $store);
+        $reconciler = new OutboxReconciler($repository, $store, $applier);
+        $middleware = new GuestResponseCache(
+            $settings,
+            new RoutePolicyRegistry($settings),
+            new GuestEligibility(new class implements ExtensionMiddlewareRegistryInterface
+            {
+                public function resolveForRoute(string $routeName, string $path, string $group, string $timing): array
+                {
+                    return $timing === 'after_core' ? [GuestResponseCache::class] : [];
+                }
+            }),
+            new CanonicalRequestKey,
+            new ResponsePolicy,
+            $store,
+            new RecoveryBarrier($repository, $store, $reconciler, $settings),
+            new CoreCompatibility(false),
+        );
+
+        $originCalls = 0;
+        $response = $middleware->handle($this->request(), function () use (&$originCalls): JsonResponse {
+            $originCalls++;
+
+            return new JsonResponse(['origin_call' => $originCalls]);
+        });
+
+        self::assertSame(1, $originCalls);
+        self::assertSame('BYPASS; reason=core_transactional_hooks', $response->headers->get('X-JW-Power-Cache'));
+    }
+
     public function test_public_board_list_hits_and_board_generation_invalidates_it(): void
     {
         $settings = new PowerCacheSettings([
@@ -50,6 +93,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             new RecoveryBarrier($repository, $store, $reconciler, $settings),
+            new CoreCompatibility(true),
         );
         $makeRequest = function () {
             $request = $this->request(
@@ -127,6 +171,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             $barrier,
+            new CoreCompatibility(true),
         );
 
         $originCalls = 0;
@@ -194,6 +239,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             new ResponsePolicy,
             $store,
             $barrier,
+            new CoreCompatibility(true),
         );
         $request = $this->request();
         $snapshot = $repository->snapshot();

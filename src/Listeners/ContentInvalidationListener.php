@@ -23,7 +23,12 @@ final class ContentInvalidationListener implements HookListenerInterface
             'sirsoft-page.attachment.after_delete',
             'sirsoft-page.attachment.after_reorder',
         ] as $hook) {
-            $hooks[$hook] = ['method' => 'handlePageMutation', 'type' => 'action', 'sync' => true];
+            $hooks[$hook] = [
+                'method' => 'handlePageMutation',
+                'type' => 'action',
+                'sync' => true,
+                'transactional' => true,
+            ];
         }
 
         foreach ([
@@ -37,7 +42,12 @@ final class ContentInvalidationListener implements HookListenerInterface
             'sirsoft-ecommerce.category-image.after_reorder',
             'sirsoft-ecommerce.category-image.after_update',
         ] as $hook) {
-            $hooks[$hook] = ['method' => 'handleCategoryMutation', 'type' => 'action', 'sync' => true];
+            $hooks[$hook] = [
+                'method' => 'handleCategoryMutation',
+                'type' => 'action',
+                'sync' => true,
+                'transactional' => true,
+            ];
         }
 
         foreach ([
@@ -49,7 +59,12 @@ final class ContentInvalidationListener implements HookListenerInterface
             'sirsoft-ecommerce.product.after_bulk_stock_update',
             'sirsoft-ecommerce.product.after_stock_sync',
         ] as $hook) {
-            $hooks[$hook] = ['method' => 'handleProductMutation', 'type' => 'action', 'sync' => true];
+            $hooks[$hook] = [
+                'method' => 'handleProductMutation',
+                'type' => 'action',
+                'sync' => true,
+                'transactional' => $hook !== 'sirsoft-ecommerce.product.after_stock_sync',
+            ];
         }
 
         foreach ([
@@ -77,7 +92,32 @@ final class ContentInvalidationListener implements HookListenerInterface
             'sirsoft-board.attachment.after_delete',
             'sirsoft-board.attachment.after_reorder',
         ] as $hook) {
-            $hooks[$hook] = ['method' => 'handleBoardMutation', 'type' => 'action', 'sync' => true];
+            $transactional = in_array($hook, [
+                'sirsoft-board.board.after_create',
+                'sirsoft-board.board.after_update',
+                'sirsoft-board.board.after_delete',
+                'sirsoft-board.post.after_create',
+                'sirsoft-board.post.after_update',
+                'sirsoft-board.post.after_delete',
+                'sirsoft-board.post.after_blind',
+                'sirsoft-board.post.after_restore',
+                'sirsoft-board.comment.after_create',
+                'sirsoft-board.comment.after_update',
+                'sirsoft-board.comment.after_delete',
+                'sirsoft-board.comment.after_blind',
+                'sirsoft-board.comment.after_restore',
+                'sirsoft-board.attachment.after_upload',
+                'sirsoft-board.attachment.after_link',
+                'sirsoft-board.attachment.after_delete',
+                'sirsoft-board.attachment.after_reorder',
+            ], true);
+
+            $hooks[$hook] = [
+                'method' => 'handleBoardMutation',
+                'type' => 'action',
+                'sync' => true,
+                'transactional' => $transactional,
+            ];
         }
 
         return $hooks;

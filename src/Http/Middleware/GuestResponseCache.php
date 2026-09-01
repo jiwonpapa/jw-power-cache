@@ -11,6 +11,7 @@ use Plugins\Jw\PowerCache\Keys\CanonicalRequestKey;
 use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
 use Plugins\Jw\PowerCache\Policy\RoutePolicy;
 use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
+use Plugins\Jw\PowerCache\Runtime\CoreCompatibility;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
@@ -36,6 +37,7 @@ final class GuestResponseCache
         private readonly ResponsePolicy $responsePolicy,
         private readonly PowerCacheStoreInterface $store,
         private readonly RecoveryBarrier $barrier,
+        private readonly CoreCompatibility $compatibility,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -43,6 +45,10 @@ final class GuestResponseCache
         $mode = $this->settings->mode();
         if ($mode === 'bypass') {
             return $this->pass($request, $next, 'BYPASS', 'mode');
+        }
+
+        if ($mode === 'active' && ! $this->compatibility->supportsTransactionalActions()) {
+            return $this->pass($request, $next, 'BYPASS', 'core_transactional_hooks');
         }
 
         $policy = $this->policies->resolve($request);

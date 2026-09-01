@@ -1,11 +1,12 @@
 # Roadmap and release gates
 
-## Current: 0.2.x Technical Preview
+## Current: 0.3.0-alpha.2 Technical Preview
 
 - conservative public guest API allowlist;
 - durable invalidation outbox and generation cache;
 - missing control-key recovery with runtime-epoch rotation;
 - rollback-safe emergency barrier;
+- G7 7.0.10 same-transaction mutation seam integration and fail-closed capability gate;
 - Redis, SQLite, MySQL, and MariaDB regression matrix;
 - reproducible release archives with checksums and provenance attestation.
 
@@ -19,7 +20,8 @@
 
 ## 1.0 gate
 
-- G7 exposes an officially supported same-transaction mutation seam, or every supported write route has an equivalent atomic adapter;
+- G7 7.0.10 same-transaction mutation seam is officially released and the plugin CI no longer depends on a feature branch;
+- site-wide settings and extension lifecycle changes have a transactional seam or an automatic maintenance barrier;
 - at least 30 days of production soak across 5 or more independent sites with no cache-caused data exposure or stale-content incident;
 - restore drill, release rollback, security disclosure, support boundary, and compatibility policy verified;
 - published signed release notes and checksums for every supported artifact.

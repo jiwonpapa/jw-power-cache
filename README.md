@@ -2,7 +2,7 @@
 
 JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효화로 가속하는 Gnuboard 7 플러그인입니다. 데이터 신선도를 TTL에 맡기지 않고, 변경 훅이 실행되면 내구성 있는 outbox를 기록한 뒤 캐시 세대를 회전합니다.
 
-현재 버전은 `0.3.0-alpha.1 Technical Preview`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 플러그인 경계 밖의 코어 파일을 수정하지 않습니다.
+현재 버전은 `0.3.0-alpha.2 Technical Preview`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. G7 7.0.10의 공식 동일 트랜잭션 mutation 훅 계약을 요구합니다.
 
 ## 현재 지원 범위
 
@@ -23,8 +23,8 @@ JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효
 
 ## 정합성 모델
 
-1. 변경 훅 리스너는 모두 `sync: true`로 실행됩니다.
-2. 훅 실행 시 DB 트랜잭션이 열려 있으면 같은 트랜잭션에 outbox와 `dirty_event_id`를 기록합니다. 트랜잭션 밖이면 전용 짧은 트랜잭션으로 먼저 기록합니다.
+1. 지원 콘텐츠·사용자 표시 쓰기 경로의 변경 리스너는 `sync: true, transactional: true`로 원본 변경 트랜잭션 안에서 실행됩니다.
+2. 같은 트랜잭션에 outbox와 `dirty_event_id`를 기록하므로 리스너 실패 시 원본 변경까지 함께 롤백됩니다.
 3. 커밋 뒤 outbox ID를 세대 값으로 적용합니다.
 4. 정상 HIT는 전용 저장소의 clean runtime snapshot, 비상 장벽, 현재 세대 벡터를 모두 통과해야 합니다. DB state는 snapshot 최초 생성·dirty 복구·운영 진단 때만 읽습니다.
 5. Redis/file 오류가 나면 원본 컨트롤러로 fail-open하고 캐시 때문에 5xx를 만들지 않습니다.
@@ -34,7 +34,9 @@ JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효
 
 Redis eviction이나 운영 실수로 barrier, snapshot, generation 키 하나만 사라져도 값 `0`으로 간주하지 않습니다. 모든 HIT를 막고 DB의 runtime epoch를 회전한 뒤 알려진 전체 generation 제어면을 재구축하므로, 물리적으로 남은 과거 응답은 새 키 공간에서 도달할 수 없습니다.
 
-현재 코어의 일부 after 훅은 콘텐츠 트랜잭션이 이미 커밋된 뒤 발행됩니다. 그 경로는 콘텐츠 커밋과 outbox 기록 사이의 프로세스 강제 종료 구간을 플러그인만으로 원자화할 수 없습니다. 따라서 현재 버전은 Technical Preview이며, 절대 정합성이 필요한 운영 활성화는 동일 트랜잭션 mutation seam 또는 해당 쓰기 경로 어댑터가 추가된 뒤 판정해야 합니다.
+G7 코어가 동일 트랜잭션 훅 capability를 제공하지 않으면 doctor가 실패하고 active 모드도 `core_transactional_hooks` 사유로 HIT를 차단합니다. 7.0.10 코어 후보와의 원자적 commit/rollback은 검증했지만, 공식 코어 릴리스와 다사이트 장기 soak가 끝나지 않아 현재 버전은 Technical Preview입니다.
+
+사이트 전역 설정과 모듈·플러그인·템플릿·언어팩 생명주기는 아직 일반 after 훅 경계입니다. 이 관리 작업은 `bypass` 전환 → 작업 수행 → `purge --scope=site` → doctor → `active` 순서의 유지보수 절차를 적용해야 합니다.
 
 `retention_seconds`는 오래된 물리 엔트리를 회수하기 위한 백엔드 보존시간입니다. 데이터 신선도 TTL이 아닙니다. 세대가 바뀐 엔트리는 보존시간이 남아도 즉시 MISS입니다.
 
@@ -137,7 +139,8 @@ php artisan power-cache:gc --days=7
 - 캐시 HIT는 extension `api, after_core` 지점에서 반환되므로 해당 route의 `optional.sanctum`·throttle을 실행하지 않습니다. 이를 허용한 세 route만 정확한 middleware 계약으로 고정합니다.
 - `after_core` 앞에서 실행되는 코어 API 미들웨어 비용은 남습니다. runtime barrier와 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 뒤쪽 route permission을 안전하게 대체하기 위해 guest role/permission을 요청당 한 번 읽습니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
 - 직접 SQL 변경을 자동 감지할 수 없습니다.
-- 코어가 콘텐츠 커밋 뒤 after 훅을 발행하는 경로에는 커밋과 outbox 사이의 프로세스 종료 공백이 남습니다.
+- 공식 G7 7.0.10 릴리스 전에는 transaction seam 브랜치가 필요합니다.
+- 사이트 전역 설정·확장 생명주기는 아직 동일 트랜잭션 seam 대상이 아니므로 유지보수 중 bypass와 완료 후 site purge가 필요합니다.
 - 다중 노드 file 저장소는 지원하지 않습니다.
 - 전체 페이지 HTML, 바이너리, 검색 결과, 사용자별 응답은 지원하지 않습니다.
 - PHP/Laravel 부팅 전 캐시는 별도 서버 어댑터 범위입니다.
@@ -152,7 +155,7 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 독립 테스트는 Redis 통합을 포함해 **43 tests / 401 assertions**이며 guest 격리, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 변경 후 MISS, commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.8/7.0.9, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 독립 테스트는 Redis 통합을 포함해 **47 tests / 413 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.10 transaction seam, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.
 

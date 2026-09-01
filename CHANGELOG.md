@@ -2,6 +2,22 @@
 
 ## [Unreleased]
 
+## [0.3.0-alpha.2] - 2026-09-01
+
+### Added
+
+- G7 7.0.10 동일 트랜잭션 mutation 훅 연동과 코어 capability 진단
+- 원본 변경, 무효화 outbox, 세대 적용의 실제 MySQL·Redis commit/rollback 통합 테스트
+
+### Changed
+
+- 페이지·카테고리·상품·게시판·사용자 표현 변경 리스너를 동일 트랜잭션 전용 훅으로 전환
+- G7 최소 버전을 7.0.10, 페이지·게시판·이커머스 모듈 최소 버전을 transaction seam 포함 버전으로 상향
+
+### Fixed
+
+- 지원하지 않는 G7 코어에서 active 모드가 stale 가능성을 안고 동작하지 않도록 HIT를 fail-closed 우회
+
 ## [0.3.0-alpha.1] - 2026-09-01
 
 ### Added

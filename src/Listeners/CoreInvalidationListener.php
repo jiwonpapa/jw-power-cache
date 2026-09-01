@@ -99,7 +99,12 @@ final class CoreInvalidationListener implements HookListenerInterface
             'core.attachment.after_reorder',
             'core.attachment.after_bulk_delete',
         ] as $hook) {
-            $hooks[$hook] = ['method' => 'handleBoardPresentationMutation', 'type' => 'action', 'sync' => true];
+            $hooks[$hook] = [
+                'method' => 'handleBoardPresentationMutation',
+                'type' => 'action',
+                'sync' => true,
+                'transactional' => true,
+            ];
         }
 
         return $hooks;

@@ -8,6 +8,7 @@ use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
 use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
 use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
+use Plugins\Jw\PowerCache\Runtime\CoreCompatibility;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Throwable;
@@ -21,6 +22,7 @@ final class PowerCacheInspector
         private readonly RoutePolicyRegistry $policies,
         private readonly ExtensionMiddlewareRegistryInterface $extensionMiddleware,
         private readonly RecoveryBarrier $barrier,
+        private readonly CoreCompatibility $compatibility,
     ) {}
 
     /** @return array<string, mixed> */
@@ -34,6 +36,10 @@ final class PowerCacheInspector
         $storeProbe = ['ok' => null, 'driver' => $this->settings->storeDriver()];
         $emergencyDirty = null;
         $barrierPresent = false;
+
+        if (! $this->compatibility->supportsTransactionalActions()) {
+            $errors[] = 'G7 코어가 transactional mutation 훅 계약을 지원하지 않습니다.';
+        }
 
         try {
             $tablesReady = $this->repository->tablesReady();
@@ -190,6 +196,7 @@ final class PowerCacheInspector
             'barrier_present' => $barrierPresent,
             'emergency_dirty' => $emergencyDirty,
             'store' => $storeProbe,
+            'transactional_actions' => $this->compatibility->supportsTransactionalActions(),
             'routes' => $routes,
             'warnings' => $warnings,
             'errors' => $errors,

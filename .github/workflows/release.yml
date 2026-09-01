@@ -9,6 +9,10 @@ permissions:
   id-token: write
   attestations: write
 
+env:
+  G7_REPOSITORY: jiwonpapa/gnuboard7
+  G7_REF: codex/power-cache-transaction-seam
+
 jobs:
   verify-and-release:
     runs-on: ubuntu-latest
@@ -32,8 +36,8 @@ jobs:
       - name: Checkout supported Gnuboard
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          repository: gnuboard/g7
-          ref: 7.0.9
+          repository: ${{ env.G7_REPOSITORY }}
+          ref: ${{ env.G7_REF }}
           path: g7
 
       - name: Set up PHP
