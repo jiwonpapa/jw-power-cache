@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.3.0-beta.1] - 2026-09-01
+
 ### Added
 
 - 유지보수 모드·bypass·명시적 확인을 강제하고 복구 후 runtime epoch와 전체 제어면을 재구축하는 `power-cache:restore-finalize`

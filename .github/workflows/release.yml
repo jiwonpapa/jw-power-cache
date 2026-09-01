@@ -11,7 +11,7 @@ permissions:
 
 env:
   G7_REPOSITORY: jiwonpapa/gnuboard7
-  G7_REF: codex/power-cache-transaction-seam
+  G7_REF: 7d628dc4e57153a6217372a8a4bf8ea2904c680f
 
 jobs:
   verify-and-release:
@@ -82,4 +82,15 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "JW PowerCache $GITHUB_REF_NAME"
+        run: |
+          release_args=("$GITHUB_REF_NAME" dist/* --verify-tag --title "JW PowerCache $GITHUB_REF_NAME")
+          notes_file="docs/releases/${GITHUB_REF_NAME}.md"
+          if [[ -f "$notes_file" ]]; then
+            release_args+=(--notes-file "$notes_file")
+          else
+            release_args+=(--generate-notes)
+          fi
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            release_args+=(--prerelease)
+          fi
+          gh release create "${release_args[@]}"

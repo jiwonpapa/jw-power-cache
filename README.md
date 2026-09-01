@@ -2,7 +2,7 @@
 
 JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효화로 가속하는 Gnuboard 7 플러그인입니다. 데이터 신선도를 TTL에 맡기지 않고, 변경 훅이 실행되면 내구성 있는 outbox를 기록한 뒤 캐시 세대를 회전합니다.
 
-현재 버전은 `0.3.0-alpha.3 Technical Preview`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. G7 7.0.10의 공식 동일 트랜잭션 mutation 훅 계약을 요구합니다.
+현재 버전은 `0.3.0-beta.1 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. G7 7.0.10의 공식 동일 트랜잭션 mutation 훅 계약을 요구합니다.
 
 ## 현재 지원 범위
 
@@ -34,7 +34,7 @@ JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효
 
 Redis eviction이나 운영 실수로 barrier, snapshot, generation 키 하나만 사라져도 값 `0`으로 간주하지 않습니다. 모든 HIT를 막고 DB의 runtime epoch를 회전한 뒤 알려진 전체 generation 제어면을 재구축하므로, 물리적으로 남은 과거 응답은 새 키 공간에서 도달할 수 없습니다.
 
-G7 코어가 동일 트랜잭션 훅 capability를 제공하지 않으면 doctor가 실패하고 active 모드도 `core_transactional_hooks` 사유로 HIT를 차단합니다. 정확한 7.0.10 transaction-seam 커밋과의 원자적 commit/rollback, 장애 캠페인, 백업 복구는 검증했지만 공식 코어 릴리스 또는 별도 지원 패키지가 아직 없어 현재 버전은 Beta 후보입니다.
+G7 코어가 동일 트랜잭션 훅 capability를 제공하지 않으면 doctor가 실패하고 active 모드도 `core_transactional_hooks` 사유로 HIT를 차단합니다. 정확한 7.0.10 transaction-seam 커밋과의 원자적 commit/rollback, 장애 캠페인, 백업 복구는 검증했지만 공식 코어 릴리스 또는 별도 지원 패키지가 아직 없어 현재 버전은 Open Source Beta입니다.
 
 사이트 전역 설정과 모듈·플러그인·템플릿·언어팩 생명주기는 아직 일반 after 훅 경계입니다. 이 관리 작업은 `bypass` 전환 → 작업 수행 → `purge --scope=site` → doctor → `active` 순서의 유지보수 절차를 적용해야 합니다.
 
