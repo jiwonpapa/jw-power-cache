@@ -119,6 +119,7 @@ final class PluginContractTest extends TestCase
         $defaults = array_keys($settings['defaults']);
         $frontend = array_keys($settings['frontend_schema']);
         $configValues = array_keys($plugin->getConfigValues());
+        $layoutSchema = array_keys($layout['schema'] ?? []);
         $adminFields = [];
         $this->collectNamedInputs($layout, $adminFields);
 
@@ -126,11 +127,13 @@ final class PluginContractTest extends TestCase
         sort($defaults);
         sort($frontend);
         sort($configValues);
+        sort($layoutSchema);
         sort($adminFields);
 
         self::assertSame($expected, $defaults, 'defaults.json defaults mismatch');
         self::assertSame($expected, $frontend, 'frontend_schema mismatch');
         self::assertSame($expected, $configValues, 'Plugin config values mismatch');
+        self::assertSame($expected, $layoutSchema, 'Admin layout schema mismatch');
         self::assertSame($expected, array_values(array_unique($adminFields)), 'Admin form fields mismatch');
     }
 

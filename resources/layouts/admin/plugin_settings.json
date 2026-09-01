@@ -314,6 +314,7 @@
         "store_driver": { "type": "enum", "options": ["file", "redis"], "default": "file" },
         "cache_public_pages": { "type": "boolean", "default": true },
         "cache_public_categories": { "type": "boolean", "default": true },
+        "cache_public_board_lists": { "type": "boolean", "default": true },
         "automatic_recovery": { "type": "boolean", "default": true },
         "metrics_enabled": { "type": "boolean", "default": true },
         "debug_headers": { "type": "boolean", "default": false },
