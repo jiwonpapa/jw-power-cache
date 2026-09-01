@@ -14,6 +14,8 @@ Eligible guest requests pass an explicit route and presentation contract. Active
 
 On rollback, the transaction callback clears only its own token. It cannot clear a newer mutation's barrier.
 
+After restoring a database backup, the restored runtime epoch must never be trusted while Redis may still contain responses from another point in time. `power-cache:restore-finalize --yes` therefore requires maintenance mode and `bypass`, holds or establishes the emergency barrier, reconciles restored outbox work, rotates the DB runtime epoch, resets every known generation, publishes a new runtime snapshot, and only then clears the barrier. A failure leaves the dirty barrier in place so traffic cannot reuse old responses.
+
 ## Failure matrix
 
 | Failure | Serving behavior | Recovery |

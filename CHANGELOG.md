@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- 유지보수 모드·bypass·명시적 확인을 강제하고 복구 후 runtime epoch와 전체 제어면을 재구축하는 `power-cache:restore-finalize`
+- 실제 설정·DB 변조, 논리 백업 복구, 과거 Redis 응답 epoch 거부를 검증하는 격리 복구 연습 도구
+
+### Changed
+
+- CI의 지원 G7 transaction seam을 이동 가능한 브랜치가 아닌 정확한 커밋 `7d628dc4e57153a6217372a8a4bf8ea2904c680f`로 고정
+
 ### Fixed
 
 - 관리자 설정의 게시판 목록 캐시 필드가 레이아웃 검증 스키마에서 누락된 계약 불일치
@@ -9,6 +18,7 @@
 ### Tests
 
 - 관리자 폼, 레이아웃 스키마, 기본값, 공개 비노출 스키마, 플러그인 설정 계약의 키 집합 일치 검증
+- 복구된 outbox 재생, runtime epoch 회전, 제어면 초기화, 과거 응답 epoch 격리를 실제 DB·저장소에서 검증
 
 ## [0.3.0-alpha.3] - 2026-09-01
 

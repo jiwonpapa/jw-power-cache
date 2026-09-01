@@ -34,7 +34,7 @@ JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효
 
 Redis eviction이나 운영 실수로 barrier, snapshot, generation 키 하나만 사라져도 값 `0`으로 간주하지 않습니다. 모든 HIT를 막고 DB의 runtime epoch를 회전한 뒤 알려진 전체 generation 제어면을 재구축하므로, 물리적으로 남은 과거 응답은 새 키 공간에서 도달할 수 없습니다.
 
-G7 코어가 동일 트랜잭션 훅 capability를 제공하지 않으면 doctor가 실패하고 active 모드도 `core_transactional_hooks` 사유로 HIT를 차단합니다. 7.0.10 코어 후보와의 원자적 commit/rollback은 검증했지만, 공식 코어 릴리스와 다사이트 장기 soak가 끝나지 않아 현재 버전은 Technical Preview입니다.
+G7 코어가 동일 트랜잭션 훅 capability를 제공하지 않으면 doctor가 실패하고 active 모드도 `core_transactional_hooks` 사유로 HIT를 차단합니다. 정확한 7.0.10 transaction-seam 커밋과의 원자적 commit/rollback, 장애 캠페인, 백업 복구는 검증했지만 공식 코어 릴리스 또는 별도 지원 패키지가 아직 없어 현재 버전은 Beta 후보입니다.
 
 사이트 전역 설정과 모듈·플러그인·템플릿·언어팩 생명주기는 아직 일반 after 훅 경계입니다. 이 관리 작업은 `bypass` 전환 → 작업 수행 → `purge --scope=site` → doctor → `active` 순서의 유지보수 절차를 적용해야 합니다.
 
@@ -103,6 +103,7 @@ php artisan power-cache:purge --scope=category --reason=product-import
 php artisan power-cache:purge --scope=board --reason=board-import
 php artisan power-cache:reconcile --limit=100
 php artisan power-cache:gc --days=7
+php artisan power-cache:restore-finalize --yes
 ```
 
 - `doctor`: 저장소 read/write, DB state/outbox, route·middleware 계약, Redis DB 격리·eviction 정책·누적 eviction을 검사합니다.
@@ -111,10 +112,33 @@ php artisan power-cache:gc --days=7
 - `purge`: key 삭제 없이 `site`, `page:all`, `category:tree`, `board:all` 세대를 회전합니다.
 - `reconcile`: 중복·역순 실행에도 안전하게 미적용 outbox를 재생합니다.
 - `gc`: 적용 완료된 오래된 outbox 감사 이력과 file 저장소의 만료 물리 파일을 정리합니다. 미적용 행과 캐시 신선도에는 영향을 주지 않습니다. Redis 물리 만료는 Redis 자체 TTL이 담당합니다.
+- `restore-finalize`: 유지보수 모드와 `bypass`에서만 실행되며, 복구된 outbox를 정리한 뒤 runtime epoch를 회전하고 전체 제어면을 재구축합니다. `--yes`가 없거나 사이트가 온라인이면 변경하지 않습니다.
 
 더미 생성기, importer, seed, 외부 SQL처럼 공식 Service 훅을 우회하는 변경 뒤에는 반드시 해당 scope purge를 실행해야 합니다. 변경 범위를 모르면 `--scope=site`를 사용하십시오.
 
 활성 플러그인은 `reconcile --limit=100`을 매분 예약해 저장소 장애 뒤 남은 outbox를 자동 재생하며, 일일 GC는 적용 완료된 감사 이력만 정리합니다. 서버의 Laravel scheduler가 실제로 실행 중이어야 합니다.
+
+## 백업 복구 순서
+
+백업에는 G7 전체 데이터베이스, `storage/app/plugins/jw-power_cache/settings/setting.json`, 설치한 플러그인 ZIP과 체크섬을 함께 보관하십시오. Redis는 원본 데이터가 아니므로 백업본을 복원하지 않습니다.
+
+```bash
+php artisan power-cache:mode bypass
+php artisan down --retry=60
+# queue worker를 멈춘 뒤 DB, 설정 파일, 플러그인 코드를 복구
+php artisan power-cache:restore-finalize --yes
+php artisan power-cache:doctor
+php artisan up
+```
+
+`restore-finalize`가 실패하면 유지보수 모드를 해제하지 마십시오. 비상 dirty 장벽, 미적용 outbox, Redis 연결을 먼저 확인해야 합니다. 격리 환경 연습 도구는 정확한 DB 이름과 명시적 파괴 허용값을 모두 요구합니다.
+
+```bash
+G7_ROOT=/path/to/isolated-g7 \
+JWPC_RESTORE_DRILL_ALLOW_DESTRUCTIVE=1 \
+JWPC_RESTORE_DRILL_EXPECT_DATABASE=isolated_database \
+php tool/run-backup-restore-drill.php
+```
 
 ## 보안 불변식
 
@@ -157,12 +181,14 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 독립 테스트는 Redis 통합을 포함해 **49 tests / 426 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생, 벤치마크 체크섬·중앙값 판정을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.10 transaction seam, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 독립 테스트는 실제 MySQL·Redis 기준 **51 tests / 440 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생, 복구 후 epoch 회전·제어면 재구축, 벤치마크 체크섬·중앙값 판정을 검증합니다. CI는 PHP 8.2/8.5, 정확히 고정한 G7 transaction-seam 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.
 
-Redis 로컬 재현 환경의 3회 중앙값 게시판 성능 결과는 [로컬 Beta 성능 보고서](docs/benchmark/local-beta-performance-2026-09-01.md)에 기록되어 있습니다. 지정 게시판 경로의 단기 성능 게이트는 통과했지만, 15~30분 FPM 내구성·장애 주입 게이트는 아직 남아 있습니다.
+Redis 로컬 재현 환경의 3회 중앙값 게시판 성능 결과는 [로컬 Beta 성능 보고서](docs/benchmark/local-beta-performance-2026-09-01.md)에 기록되어 있습니다. 15분 FPM 내구성·장애 주입 결과는 [장애 캠페인 보고서](docs/benchmark/local-fpm-fault-campaign-2026-09-01.md)에 기록되어 있습니다.
 
 G7 7.0.10 후보의 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다.
+
+관리자 설정 실브라우저 결과는 [관리자 설정 검증 보고서](docs/verification/admin-settings-browser-2026-09-01.md), 실제 백업 복구와 릴리스 롤백 결과는 [복구·롤백 검증 보고서](docs/verification/backup-restore-release-rollback-2026-09-01.md)에 기록되어 있습니다.
 
 제품화 기준과 운영 문서는 [로드맵](ROADMAP.md), [아키텍처·장애 모델](docs/architecture.md), [성능 검증 방법](docs/benchmark/methodology.md), [릴리스 체크리스트](docs/release-checklist.md), [보안 정책](SECURITY.md), [지원 범위](SUPPORT.md)에서 확인할 수 있습니다.

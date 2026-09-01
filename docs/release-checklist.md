@@ -16,6 +16,7 @@ The current alpha verification snapshot is recorded in [clean lifecycle evidence
 - [ ] `doctor`, MISS→HIT, scoped purge, rollback, Redis restart, and selective control-key loss pass.
 - [ ] Upgrade preserves DB state and invalidates incompatible cache entries through format/policy versioning.
 - [ ] Deactivate and rollback rotate the runtime epoch and return traffic safely to origin.
+- [ ] A real DB/settings restore followed by `restore-finalize` preserves site identity, rotates runtime epoch, rejects old cache entries, and leaves no dirty barrier or pending outbox.
 
 ## Evidence and publication
 
