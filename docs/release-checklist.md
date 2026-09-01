@@ -1,5 +1,7 @@
 # Release checklist
 
+The current alpha verification snapshot is recorded in [clean lifecycle evidence](verification/clean-lifecycle-2026-09-01.md). Check a box only for the exact release commit and artifact being published; prior alpha evidence is supporting evidence, not a substitute.
+
 ## Code gate
 
 - [ ] Manifest, changelog, and tag versions match.

@@ -50,6 +50,8 @@ https://github.com/jiwonpapa/jw-power-cache
 
 개발 환경에서 번들 소스로 설치하려면 저장소를 G7의 `_bundled` 디렉터리에 복제합니다.
 
+먼저 운영 저장소를 선택하고 환경변수를 적용합니다. 기본 file 드라이버를 사용할 때는 아래의 단일 노드 조건을 확인한 뒤 `JW_POWER_CACHE_FILE_SINGLE_NODE=true`를 설정해야 최초 `doctor`가 제어면을 안전하게 초기화합니다. 다중 노드는 아래 Redis 설정을 먼저 적용하십시오.
+
 ```bash
 git clone https://github.com/jiwonpapa/jw-power-cache.git plugins/_bundled/jw-power_cache
 php artisan extension:update-autoload
@@ -58,7 +60,7 @@ php artisan plugin:activate jw-power_cache
 php artisan power-cache:doctor
 ```
 
-설치 기본 모드는 `observe`입니다. 이 모드는 적합성만 검사하고 응답을 저장하거나 HIT로 제공하지 않습니다. doctor를 통과한 뒤 관리자 플러그인 설정에서 `active`로 바꿉니다.
+설치 기본 모드는 `observe`입니다. 이 모드는 적합성만 검사하고 응답을 저장하거나 HIT로 제공하지 않습니다. 저장소 환경변수 적용 후 doctor를 통과한 뒤 `php artisan power-cache:mode active` 또는 관리자 플러그인 설정에서 `active`로 바꿉니다.
 
 ### 단일 노드 file 저장소
 
@@ -158,5 +160,7 @@ G7_ROOT=/path/to/gnuboard7 \
 현재 독립 테스트는 Redis 통합을 포함해 **47 tests / 413 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.10 transaction seam, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.
+
+G7 7.0.10 후보의 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다.
 
 제품화 기준과 운영 문서는 [로드맵](ROADMAP.md), [아키텍처·장애 모델](docs/architecture.md), [성능 검증 방법](docs/benchmark/methodology.md), [릴리스 체크리스트](docs/release-checklist.md), [보안 정책](SECURITY.md), [지원 범위](SUPPORT.md)에서 확인할 수 있습니다.
