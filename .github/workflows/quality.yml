@@ -63,10 +63,13 @@ jobs:
         run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
 
       - name: Check PHP syntax
-        run: find src tests database config -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+        run: find src tests database config tool -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Check shell syntax
+        run: bash -n tool/*.sh
 
       - name: Check code style
-        run: g7/vendor/bin/pint --test src tests database plugin.php
+        run: g7/vendor/bin/pint --test src tests database tool plugin.php
 
       - name: Run unit, feature, and Redis integration tests
         env:

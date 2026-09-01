@@ -138,8 +138,8 @@ php artisan power-cache:gc --days=7
 ## 알려진 제한
 
 - 현재 실제 HIT 지원은 페이지 상세, 카테고리 API, 공개 비회원 게시판 hot-list입니다.
-- 캐시 HIT는 extension `api, after_core` 지점에서 반환되므로 해당 route의 `optional.sanctum`·throttle을 실행하지 않습니다. 이를 허용한 세 route만 정확한 middleware 계약으로 고정합니다.
-- `after_core` 앞에서 실행되는 코어 API 미들웨어 비용은 남습니다. runtime barrier와 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 뒤쪽 route permission을 안전하게 대체하기 위해 guest role/permission을 요청당 한 번 읽습니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
+- 캐시 HIT는 extension `api, after_core` 지점에서 반환됩니다. Laravel 미들웨어 우선순위상 `optional.sanctum`과 throttle은 HIT 전에도 실행되며, 게시판 route permission은 뒤쪽에 있어 플러그인이 같은 `GuestRoleResolver`로 먼저 검사합니다. 이 순서를 doctor의 정확한 middleware 계약으로 고정합니다.
+- `after_core` 앞에서 실행되는 코어 API 미들웨어와 rate-limit 비용은 남습니다. runtime barrier와 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 guest role/permission을 요청당 한 번 읽습니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV·rate-limit 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
 - 직접 SQL 변경을 자동 감지할 수 없습니다.
 - 공식 G7 7.0.10 릴리스 전에는 transaction seam 브랜치가 필요합니다.
 - 사이트 전역 설정·확장 생명주기는 아직 동일 트랜잭션 seam 대상이 아니므로 유지보수 중 bypass와 완료 후 site purge가 필요합니다.
@@ -160,6 +160,8 @@ G7_ROOT=/path/to/gnuboard7 \
 현재 독립 테스트는 Redis 통합을 포함해 **47 tests / 413 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.10 transaction seam, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.
+
+Redis 로컬 재현 환경의 3회 중앙값 게시판 성능 결과는 [로컬 Beta 성능 보고서](docs/benchmark/local-beta-performance-2026-09-01.md)에 기록되어 있습니다. 지정 게시판 경로의 단기 성능 게이트는 통과했지만, 15~30분 FPM 내구성·장애 주입 게이트는 아직 남아 있습니다.
 
 G7 7.0.10 후보의 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다.
 

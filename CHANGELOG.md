@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- 고정 RPS 내구성 및 요청 수 제한 무제한 성능 매트릭스를 실행하는 재현 가능한 혼합·지정 경로 부하 도구
+- 3회 중앙값, 동시성별 p95·처리량·오류율, BYPASS/ACTIVE 경로별 응답 체크섬을 fail-closed 판정하는 벤치마크 요약기
+
+### Changed
+
+- 실제 미들웨어 실행 순서에 맞춰 HIT에서도 optional auth·throttle이 유지되는 운영 제한을 명확화
+
 ## [0.3.0-alpha.2] - 2026-09-01
 
 ### Added
