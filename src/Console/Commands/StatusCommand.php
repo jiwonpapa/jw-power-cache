@@ -1,15 +1,15 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Console\Commands;
+namespace Plugins\Jw\PowerCache\Console\Commands;
 
 use Illuminate\Console\Command;
-use Plugins\G7\PowerCache\Diagnostics\PowerCacheInspector;
+use Plugins\Jw\PowerCache\Diagnostics\PowerCacheInspector;
 
 final class StatusCommand extends Command
 {
     protected $signature = 'power-cache:status {--json : JSON 형식으로 출력}';
 
-    protected $description = 'G7PowerCache 모드와 복구 장벽 상태를 조회합니다.';
+    protected $description = 'JW PowerCache 모드와 복구 장벽 상태를 조회합니다.';
 
     public function handle(PowerCacheInspector $inspector): int
     {

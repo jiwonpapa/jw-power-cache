@@ -1,10 +1,10 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Console\Commands;
+namespace Plugins\Jw\PowerCache\Console\Commands;
 
 use Illuminate\Console\Command;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 
 final class GcCommand extends Command
 {
@@ -12,19 +12,19 @@ final class GcCommand extends Command
         {--days= : 적용 완료 아웃박스 보존일; 미지정 시 환경설정 사용}
         {--json : JSON 형식으로 출력}';
 
-    protected $description = '적용 완료된 오래된 G7PowerCache 아웃박스 이력을 정리합니다.';
+    protected $description = '적용 완료된 오래된 JW PowerCache 아웃박스 이력을 정리합니다.';
 
     public function handle(
         InvalidationRepositoryInterface $repository,
         PowerCacheStoreInterface $store,
     ): int {
         if (! $repository->tablesReady()) {
-            $this->error('G7PowerCache 테이블이 없습니다.');
+            $this->error('JW PowerCache 테이블이 없습니다.');
 
             return self::FAILURE;
         }
 
-        $configured = (int) config('g7_power_cache.outbox_retention_days', 7);
+        $configured = (int) config('jw_power_cache.outbox_retention_days', 7);
         $days = $this->option('days') === null ? $configured : (int) $this->option('days');
         $days = min(3650, max(1, $days));
         $deleted = $repository->pruneAppliedBefore(now()->subDays($days));

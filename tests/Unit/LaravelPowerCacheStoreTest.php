@@ -1,9 +1,9 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Unit;
+namespace Plugins\Jw\PowerCache\Tests\Unit;
 
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
-use Plugins\G7\PowerCache\Tests\Support\PowerCacheTestCase;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 
 final class LaravelPowerCacheStoreTest extends PowerCacheTestCase
 {

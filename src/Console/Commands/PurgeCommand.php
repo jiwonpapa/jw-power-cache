@@ -1,12 +1,12 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Console\Commands;
+namespace Plugins\Jw\PowerCache\Console\Commands;
 
 use Illuminate\Console\Command;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Invalidation\InvalidationCoordinator;
-use Plugins\G7\PowerCache\Invalidation\OutboxReconciler;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationCoordinator;
+use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 use Throwable;
 
 final class PurgeCommand extends Command
@@ -16,7 +16,7 @@ final class PurgeCommand extends Command
         {--reason=manual : 감사 로그용 사유}
         {--json : JSON 형식으로 출력}';
 
-    protected $description = '키 삭제 없이 G7PowerCache 세대를 회전합니다.';
+    protected $description = '키 삭제 없이 JW PowerCache 세대를 회전합니다.';
 
     public function handle(
         InvalidationCoordinator $coordinator,

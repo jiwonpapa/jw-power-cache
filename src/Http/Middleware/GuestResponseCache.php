@@ -1,19 +1,19 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Http\Middleware;
+namespace Plugins\Jw\PowerCache\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Http\Request;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Eligibility\GuestEligibility;
-use Plugins\G7\PowerCache\Keys\CanonicalRequestKey;
-use Plugins\G7\PowerCache\Policy\ResponsePolicy;
-use Plugins\G7\PowerCache\Policy\RoutePolicy;
-use Plugins\G7\PowerCache\Policy\RoutePolicyRegistry;
-use Plugins\G7\PowerCache\Runtime\PowerCacheSettings;
-use Plugins\G7\PowerCache\Runtime\RecoveryBarrier;
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Eligibility\GuestEligibility;
+use Plugins\Jw\PowerCache\Keys\CanonicalRequestKey;
+use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
+use Plugins\Jw\PowerCache\Policy\RoutePolicy;
+use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
+use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -283,7 +283,7 @@ final class GuestResponseCache
     private function debug(Response $response, string $state, string $reason): Response
     {
         if ($this->settings->debugHeaders()) {
-            $response->headers->set('X-G7-Power-Cache', $state.'; reason='.$reason);
+            $response->headers->set('X-JW-Power-Cache', $state.'; reason='.$reason);
         }
 
         return $response;

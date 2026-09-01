@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- 제품명을 `JW PowerCache`로 확정하고 독립 저장소로 분리
+- G7 플러그인 식별자를 `jw-power_cache`, PHP 네임스페이스를 `Plugins\\Jw\\PowerCache`로 변경
+- 설정, 테이블, 저장소 경로, 환경변수 및 진단 헤더의 브랜드 접두사를 `JW`로 통일
+
 ## [0.2.0] - 2026-08-23
 
 ### Added

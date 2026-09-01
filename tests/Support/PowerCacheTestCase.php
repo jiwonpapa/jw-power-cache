@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Support;
+namespace Plugins\Jw\PowerCache\Tests\Support;
 
 use Illuminate\Cache\ArrayStore;
 use Illuminate\Cache\Repository as CacheRepository;
@@ -12,8 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Facade;
 use PHPUnit\Framework\TestCase;
-use Plugins\G7\PowerCache\Infrastructure\DatabaseInvalidationRepository;
-use Plugins\G7\PowerCache\Store\LaravelPowerCacheStore;
+use Plugins\Jw\PowerCache\Infrastructure\DatabaseInvalidationRepository;
+use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
 use Psr\Log\NullLogger;
 
 abstract class PowerCacheTestCase extends TestCase
@@ -27,13 +27,13 @@ abstract class PowerCacheTestCase extends TestCase
         parent::setUp();
 
         Facade::clearResolvedInstances();
-        $this->app = new Application(dirname(__DIR__, 5));
+        $this->app = new Application(JW_POWER_CACHE_G7_ROOT);
         $this->app->detectEnvironment(fn (): string => 'testing');
         $this->app->instance('log', new NullLogger);
         $this->app->instance('config', new ConfigRepository([
             'app' => ['locale' => 'ko', 'fallback_locale' => 'en'],
             'database' => ['default' => 'testing'],
-            'g7_power_cache' => [
+            'jw_power_cache' => [
                 'format_version' => 1,
                 'policy_version' => 'guest-api-v1',
                 'file' => ['single_node_ack' => true],
@@ -56,7 +56,7 @@ abstract class PowerCacheTestCase extends TestCase
         $this->app->instance('db', $this->database->getDatabaseManager());
         $this->app->instance('db.schema', $this->database->getConnection('testing')->getSchemaBuilder());
 
-        $migration = require dirname(__DIR__, 2).'/database/migrations/2026_08_23_000001_create_g7_power_cache_tables.php';
+        $migration = require dirname(__DIR__, 2).'/database/migrations/2026_08_23_000001_create_jw_power_cache_tables.php';
         $migration->up();
     }
 

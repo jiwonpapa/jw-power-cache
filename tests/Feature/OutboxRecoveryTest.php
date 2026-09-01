@@ -1,14 +1,14 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Feature;
+namespace Plugins\Jw\PowerCache\Tests\Feature;
 
 use Illuminate\Contracts\Cache\Lock;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Invalidation\InvalidationApplier;
-use Plugins\G7\PowerCache\Invalidation\InvalidationCoordinator;
-use Plugins\G7\PowerCache\Invalidation\OutboxReconciler;
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
-use Plugins\G7\PowerCache\Tests\Support\PowerCacheTestCase;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationApplier;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationCoordinator;
+use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 use RuntimeException;
 
 final class OutboxRecoveryTest extends PowerCacheTestCase

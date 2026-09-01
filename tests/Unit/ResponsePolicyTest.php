@@ -1,10 +1,10 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Unit;
+namespace Plugins\Jw\PowerCache\Tests\Unit;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Plugins\G7\PowerCache\Policy\ResponsePolicy;
+use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
 

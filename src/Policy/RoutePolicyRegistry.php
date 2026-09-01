@@ -1,9 +1,9 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Policy;
+namespace Plugins\Jw\PowerCache\Policy;
 
 use Illuminate\Http\Request;
-use Plugins\G7\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 
 final class RoutePolicyRegistry
 {

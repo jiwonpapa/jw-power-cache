@@ -1,13 +1,13 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Infrastructure;
+namespace Plugins\Jw\PowerCache\Infrastructure;
 
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 
 final class DatabaseInvalidationRepository implements InvalidationRepositoryInterface
 {
@@ -15,13 +15,13 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function tablesReady(): bool
     {
-        return $this->tablesReady ??= Schema::hasTable('g7_power_cache_state')
-            && Schema::hasTable('g7_power_cache_invalidation_outbox');
+        return $this->tablesReady ??= Schema::hasTable('jw_power_cache_state')
+            && Schema::hasTable('jw_power_cache_invalidation_outbox');
     }
 
     public function snapshot(): RuntimeSnapshot
     {
-        $state = DB::table('g7_power_cache_state')
+        $state = DB::table('jw_power_cache_state')
             ->whereIn('state_key', ['site_id', 'runtime_epoch', 'dirty_event_id'])
             ->pluck('state_value', 'state_key');
 
@@ -34,7 +34,7 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function append(array $scopes, string $reason, array $payload = []): int
     {
-        return (int) DB::table('g7_power_cache_invalidation_outbox')->insertGetId([
+        return (int) DB::table('jw_power_cache_invalidation_outbox')->insertGetId([
             'scopes' => json_encode(array_values($scopes), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
             'reason' => mb_substr($reason, 0, 191),
             'payload' => $payload === [] ? null : json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
@@ -48,7 +48,7 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function markDirty(int $eventId): void
     {
-        $current = (int) DB::table('g7_power_cache_state')
+        $current = (int) DB::table('jw_power_cache_state')
             ->where('state_key', 'dirty_event_id')
             ->lockForUpdate()
             ->value('state_value');
@@ -57,7 +57,7 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
             return;
         }
 
-        DB::table('g7_power_cache_state')
+        DB::table('jw_power_cache_state')
             ->where('state_key', 'dirty_event_id')
             ->update([
                 'state_value' => (string) $eventId,
@@ -67,14 +67,14 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function find(int $eventId): ?array
     {
-        $row = DB::table('g7_power_cache_invalidation_outbox')->where('id', $eventId)->first();
+        $row = DB::table('jw_power_cache_invalidation_outbox')->where('id', $eventId)->first();
 
         return $row === null ? null : $this->normalizeRow($row);
     }
 
     public function pending(int $limit): array
     {
-        return DB::table('g7_power_cache_invalidation_outbox')
+        return DB::table('jw_power_cache_invalidation_outbox')
             ->whereNull('applied_at')
             ->orderBy('id')
             ->limit(max(1, $limit))
@@ -85,7 +85,7 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function markAttemptFailed(int $eventId, string $error): void
     {
-        DB::table('g7_power_cache_invalidation_outbox')
+        DB::table('jw_power_cache_invalidation_outbox')
             ->where('id', $eventId)
             ->whereNull('applied_at')
             ->update([
@@ -97,7 +97,7 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function markApplied(int $eventId): void
     {
-        DB::table('g7_power_cache_invalidation_outbox')
+        DB::table('jw_power_cache_invalidation_outbox')
             ->where('id', $eventId)
             ->update([
                 'attempts' => DB::raw('attempts + 1'),
@@ -110,17 +110,17 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
     public function clearDirtyWhenRecovered(): bool
     {
         return DB::transaction(function (): bool {
-            DB::table('g7_power_cache_state')
+            DB::table('jw_power_cache_state')
                 ->where('state_key', 'dirty_event_id')
                 ->lockForUpdate()
                 ->value('state_value');
 
-            $hasPending = DB::table('g7_power_cache_invalidation_outbox')
+            $hasPending = DB::table('jw_power_cache_invalidation_outbox')
                 ->whereNull('applied_at')
                 ->exists();
 
             if (! $hasPending) {
-                DB::table('g7_power_cache_state')
+                DB::table('jw_power_cache_state')
                     ->where('state_key', 'dirty_event_id')
                     ->update([
                         'state_value' => '0',
@@ -136,14 +136,14 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
 
     public function pendingCount(): int
     {
-        return (int) DB::table('g7_power_cache_invalidation_outbox')
+        return (int) DB::table('jw_power_cache_invalidation_outbox')
             ->whereNull('applied_at')
             ->count();
     }
 
     public function pruneAppliedBefore(DateTimeInterface $before): int
     {
-        return DB::table('g7_power_cache_invalidation_outbox')
+        return DB::table('jw_power_cache_invalidation_outbox')
             ->whereNotNull('applied_at')
             ->where('applied_at', '<', $before)
             ->delete();
@@ -153,7 +153,7 @@ final class DatabaseInvalidationRepository implements InvalidationRepositoryInte
     {
         $epoch = (string) Str::uuid();
 
-        DB::table('g7_power_cache_state')->updateOrInsert(
+        DB::table('jw_power_cache_state')->updateOrInsert(
             ['state_key' => 'runtime_epoch'],
             [
                 'state_value' => $epoch,

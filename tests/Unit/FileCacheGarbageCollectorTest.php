@@ -1,16 +1,16 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Unit;
+namespace Plugins\Jw\PowerCache\Tests\Unit;
 
 use Illuminate\Filesystem\Filesystem;
 use PHPUnit\Framework\TestCase;
-use Plugins\G7\PowerCache\Store\FileCacheGarbageCollector;
+use Plugins\Jw\PowerCache\Store\FileCacheGarbageCollector;
 
 final class FileCacheGarbageCollectorTest extends TestCase
 {
     public function test_only_expired_cache_payloads_are_deleted_and_lock_directory_is_untouched(): void
     {
-        $root = sys_get_temp_dir().'/g7pc-gc-'.bin2hex(random_bytes(6));
+        $root = sys_get_temp_dir().'/jwpc-gc-'.bin2hex(random_bytes(6));
         mkdir($root.'/aa/bb', 0777, true);
         mkdir($root.'/locks', 0777, true);
 
@@ -39,8 +39,8 @@ final class FileCacheGarbageCollectorTest extends TestCase
 
     public function test_path_outside_explicit_safe_root_is_never_scanned_or_deleted(): void
     {
-        $root = sys_get_temp_dir().'/g7pc-gc-'.bin2hex(random_bytes(6));
-        $safeRoot = sys_get_temp_dir().'/g7pc-safe-'.bin2hex(random_bytes(6));
+        $root = sys_get_temp_dir().'/jwpc-gc-'.bin2hex(random_bytes(6));
+        $safeRoot = sys_get_temp_dir().'/jwpc-safe-'.bin2hex(random_bytes(6));
         mkdir($root, 0777, true);
         mkdir($safeRoot, 0777, true);
         $expired = $root.'/expired';

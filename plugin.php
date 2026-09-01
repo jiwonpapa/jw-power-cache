@@ -1,20 +1,20 @@
 <?php
 
-namespace Plugins\G7\PowerCache;
+namespace Plugins\Jw\PowerCache;
 
 use App\Extension\AbstractPlugin;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Plugins\G7\PowerCache\Http\Middleware\GuestResponseCache;
-use Plugins\G7\PowerCache\Listeners\ContentInvalidationListener;
-use Plugins\G7\PowerCache\Listeners\CoreInvalidationListener;
+use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
+use Plugins\Jw\PowerCache\Listeners\ContentInvalidationListener;
+use Plugins\Jw\PowerCache\Listeners\CoreInvalidationListener;
 
 final class Plugin extends AbstractPlugin
 {
     public function getConfig(): array
     {
-        return ['g7_power_cache' => __DIR__.'/config/power_cache.php'];
+        return ['jw_power_cache' => __DIR__.'/config/power_cache.php'];
     }
 
     public function getMiddleware(): array
@@ -45,7 +45,7 @@ final class Plugin extends AbstractPlugin
         return [[
             'command' => 'power-cache:gc',
             'schedule' => 'daily',
-            'description' => 'G7PowerCache 적용 완료 아웃박스 이력 정리',
+            'description' => 'JW PowerCache 적용 완료 아웃박스 이력 정리',
             'enabled_config' => null,
         ]];
     }
@@ -54,14 +54,14 @@ final class Plugin extends AbstractPlugin
     {
         return [
             [
-                'identifier' => 'g7-power_cache.operations.view',
+                'identifier' => 'jw-power_cache.operations.view',
                 'name' => ['ko' => '파워캐시 상태 조회', 'en' => 'View PowerCache status'],
                 'description' => ['ko' => '캐시 상태와 진단 결과를 조회합니다.', 'en' => 'View cache status and diagnostics.'],
                 'type' => 'admin',
                 'roles' => ['admin'],
             ],
             [
-                'identifier' => 'g7-power_cache.operations.purge',
+                'identifier' => 'jw-power_cache.operations.purge',
                 'name' => ['ko' => '파워캐시 무효화', 'en' => 'Invalidate PowerCache'],
                 'description' => ['ko' => '세대를 회전하고 복구 작업을 실행합니다.', 'en' => 'Rotate generations and run recovery.'],
                 'type' => 'admin',
@@ -160,11 +160,11 @@ final class Plugin extends AbstractPlugin
 
     private function rotateRuntimeEpoch(): void
     {
-        if (! Schema::hasTable('g7_power_cache_state')) {
+        if (! Schema::hasTable('jw_power_cache_state')) {
             return;
         }
 
-        DB::table('g7_power_cache_state')->updateOrInsert(
+        DB::table('jw_power_cache_state')->updateOrInsert(
             ['state_key' => 'runtime_epoch'],
             [
                 'state_value' => (string) Str::uuid(),

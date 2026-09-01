@@ -1,10 +1,10 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Runtime;
+namespace Plugins\Jw\PowerCache\Runtime;
 
 final class PowerCacheSettings
 {
-    public const IDENTIFIER = 'g7-power_cache';
+    public const IDENTIFIER = 'jw-power_cache';
 
     /** @param array<string, mixed>|null $override */
     public function __construct(private readonly ?array $override = null) {}

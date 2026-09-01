@@ -1,11 +1,11 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Feature;
+namespace Plugins\Jw\PowerCache\Tests\Feature;
 
 use Illuminate\Support\Facades\DB;
-use Plugins\G7\PowerCache\Invalidation\InvalidationApplier;
-use Plugins\G7\PowerCache\Invalidation\InvalidationCoordinator;
-use Plugins\G7\PowerCache\Tests\Support\PowerCacheTestCase;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationApplier;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationCoordinator;
+use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 
 final class OutboxTransactionTest extends PowerCacheTestCase
 {
@@ -58,7 +58,7 @@ final class OutboxTransactionTest extends PowerCacheTestCase
         self::assertNotNull($oldApplied);
         self::assertNotNull($recentApplied);
 
-        DB::table('g7_power_cache_invalidation_outbox')
+        DB::table('jw_power_cache_invalidation_outbox')
             ->where('id', $oldApplied)
             ->update(['applied_at' => now()->subDays(30)]);
 

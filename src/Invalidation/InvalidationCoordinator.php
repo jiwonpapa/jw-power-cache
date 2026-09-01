@@ -1,11 +1,11 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Invalidation;
+namespace Plugins\Jw\PowerCache\Invalidation;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Throwable;
 
 final class InvalidationCoordinator
@@ -48,7 +48,7 @@ final class InvalidationCoordinator
 
             return $eventId;
         } catch (Throwable $e) {
-            Log::critical('G7PowerCache 무효화 아웃박스 기록에 실패했습니다.', [
+            Log::critical('JW PowerCache 무효화 아웃박스 기록에 실패했습니다.', [
                 'reason' => $reason,
                 'scopes' => $scopes,
                 'error' => $e->getMessage(),
@@ -75,7 +75,7 @@ final class InvalidationCoordinator
         try {
             $this->store->markEmergencyDirty($reason);
         } catch (Throwable $e) {
-            Log::critical('G7PowerCache 저장소 비상 장벽 기록에도 실패했습니다.', [
+            Log::critical('JW PowerCache 저장소 비상 장벽 기록에도 실패했습니다.', [
                 'reason' => $reason,
                 'error' => $e->getMessage(),
             ]);

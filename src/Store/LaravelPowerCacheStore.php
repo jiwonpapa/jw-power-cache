@@ -1,11 +1,11 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Store;
+namespace Plugins\Jw\PowerCache\Store;
 
 use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Cache\Lock;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 use RuntimeException;
 
 final class LaravelPowerCacheStore implements PowerCacheStoreInterface
@@ -31,7 +31,7 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
     public function putResponse(string $requestKey, array $entry, int $retentionSeconds): void
     {
         if (! $this->cache->put($this->responseKey($requestKey), $entry, $retentionSeconds)) {
-            throw new RuntimeException('G7PowerCache response store write failed.');
+            throw new RuntimeException('JW PowerCache response store write failed.');
         }
     }
 
@@ -65,7 +65,7 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
 
         $lock = $this->acquireLock('generation-writer', 10);
         if ($lock === null) {
-            throw new RuntimeException('G7PowerCache generation writer lock is busy.');
+            throw new RuntimeException('JW PowerCache generation writer lock is busy.');
         }
 
         try {
@@ -73,7 +73,7 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
                 $key = $this->generationKey($scope);
                 $current = max(0, (int) $this->cache->get($key, 0));
                 if ($eventId > $current && ! $this->cache->forever($key, $eventId)) {
-                    throw new RuntimeException("G7PowerCache generation write failed: {$scope}");
+                    throw new RuntimeException("JW PowerCache generation write failed: {$scope}");
                 }
             }
         } finally {
@@ -99,7 +99,7 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
             'reason' => mb_substr($reason, 0, 500),
             'marked_at' => now()->toIso8601String(),
         ])) {
-            throw new RuntimeException('G7PowerCache emergency barrier write failed.');
+            throw new RuntimeException('JW PowerCache emergency barrier write failed.');
         }
     }
 
@@ -132,7 +132,7 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
             'runtime_epoch' => $snapshot->runtimeEpoch,
             'dirty_event_id' => $snapshot->dirtyEventId,
         ])) {
-            throw new RuntimeException('G7PowerCache runtime snapshot write failed.');
+            throw new RuntimeException('JW PowerCache runtime snapshot write failed.');
         }
     }
 

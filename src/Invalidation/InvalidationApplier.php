@@ -1,10 +1,10 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Invalidation;
+namespace Plugins\Jw\PowerCache\Invalidation;
 
 use Illuminate\Support\Facades\Log;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Throwable;
 
 final class InvalidationApplier
@@ -41,13 +41,13 @@ final class InvalidationApplier
             try {
                 $this->repository->markAttemptFailed($eventId, $e->getMessage());
             } catch (Throwable $repositoryError) {
-                Log::critical('G7PowerCache 무효화 실패 상태 기록도 실패했습니다.', [
+                Log::critical('JW PowerCache 무효화 실패 상태 기록도 실패했습니다.', [
                     'event_id' => $eventId,
                     'error' => $repositoryError->getMessage(),
                 ]);
             }
 
-            Log::error('G7PowerCache 세대 적용에 실패해 복구 장벽을 유지합니다.', [
+            Log::error('JW PowerCache 세대 적용에 실패해 복구 장벽을 유지합니다.', [
                 'event_id' => $eventId,
                 'error' => $e->getMessage(),
             ]);

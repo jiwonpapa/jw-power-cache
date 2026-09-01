@@ -1,11 +1,11 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Console\Commands;
+namespace Plugins\Jw\PowerCache\Console\Commands;
 
 use App\Services\PluginSettingsService;
 use Illuminate\Console\Command;
-use Plugins\G7\PowerCache\Diagnostics\PowerCacheInspector;
-use Plugins\G7\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Diagnostics\PowerCacheInspector;
+use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 
 final class ModeCommand extends Command
 {
@@ -13,7 +13,7 @@ final class ModeCommand extends Command
         {mode : observe|active|bypass}
         {--json : JSON 형식으로 출력}';
 
-    protected $description = 'G7PowerCache 실행 모드를 안전하게 전환합니다.';
+    protected $description = 'JW PowerCache 실행 모드를 안전하게 전환합니다.';
 
     public function handle(
         PluginSettingsService $settings,

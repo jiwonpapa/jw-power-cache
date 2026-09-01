@@ -1,9 +1,9 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Listeners;
+namespace Plugins\Jw\PowerCache\Listeners;
 
 use App\Contracts\Extension\HookListenerInterface;
-use Plugins\G7\PowerCache\Invalidation\InvalidationCoordinator;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationCoordinator;
 
 final class ContentInvalidationListener implements HookListenerInterface
 {

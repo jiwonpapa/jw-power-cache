@@ -1,12 +1,12 @@
 {
-    "name": "plugins/g7-power_cache",
-    "description": "Generation-safe guest response cache for Gnuboard7",
+    "name": "plugins/jw-power_cache",
+    "description": "Generation-safe guest response cache for Gnuboard 7",
     "type": "library",
     "version": "0.2.0",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Plugins\\G7\\PowerCache\\": ["src/", "./"]
+            "Plugins\\Jw\\PowerCache\\": ["src/", "./"]
         }
     },
     "require": {

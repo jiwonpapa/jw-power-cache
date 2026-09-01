@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Runtime;
+namespace Plugins\Jw\PowerCache\Runtime;
 
 final readonly class RuntimeSnapshot
 {

@@ -1,6 +1,6 @@
 {
     "settings": {
-        "title": "G7PowerCache Settings",
+        "title": "JW PowerCache Settings",
         "description": "Caches only verified guest public APIs with generation invalidation. Start in observe mode.",
         "safety_notice": "Run php artisan power-cache:doctor before active mode. The file store requires an explicit single-node environment acknowledgement.",
         "sections": {
@@ -19,7 +19,7 @@
             "cache_public_board_lists": "Public guest board lists (pages 1-3)",
             "automatic_recovery": "Automatically recover pending outbox events",
             "metrics_enabled": "Record cache state metrics",
-            "debug_headers": "X-G7-Power-Cache debug header",
+            "debug_headers": "X-JW-Power-Cache debug header",
             "max_response_kb": "Maximum stored response (KB)",
             "retention_seconds": "Backend retention (seconds)",
             "retention_hint": "This is garbage-collection retention, not a freshness TTL.",

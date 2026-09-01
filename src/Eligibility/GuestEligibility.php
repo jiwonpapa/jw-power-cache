@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Eligibility;
+namespace Plugins\Jw\PowerCache\Eligibility;
 
 use App\Contracts\Extension\ExtensionMiddlewareRegistryInterface;
 use App\Enums\PermissionType;
@@ -8,8 +8,8 @@ use App\Extension\HookManager;
 use App\Support\GuestRoleResolver;
 use Closure;
 use Illuminate\Http\Request;
-use Plugins\G7\PowerCache\Http\Middleware\GuestResponseCache;
-use Plugins\G7\PowerCache\Policy\RoutePolicy;
+use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
+use Plugins\Jw\PowerCache\Policy\RoutePolicy;
 
 final class GuestEligibility
 {

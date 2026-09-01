@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Eligibility;
+namespace Plugins\Jw\PowerCache\Eligibility;
 
 final readonly class EligibilityResult
 {

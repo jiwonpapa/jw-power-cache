@@ -1,15 +1,15 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Console\Commands;
+namespace Plugins\Jw\PowerCache\Console\Commands;
 
 use Illuminate\Console\Command;
-use Plugins\G7\PowerCache\Invalidation\OutboxReconciler;
+use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 
 final class ReconcileCommand extends Command
 {
     protected $signature = 'power-cache:reconcile {--limit=100 : 한 번에 재생할 최대 이벤트 수} {--json : JSON 형식으로 출력}';
 
-    protected $description = '미적용 G7PowerCache 무효화 아웃박스를 멱등 재생합니다.';
+    protected $description = '미적용 JW PowerCache 무효화 아웃박스를 멱등 재생합니다.';
 
     public function handle(OutboxReconciler $reconciler): int
     {

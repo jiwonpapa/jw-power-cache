@@ -1,9 +1,9 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Contracts;
+namespace Plugins\Jw\PowerCache\Contracts;
 
 use Illuminate\Contracts\Cache\Lock;
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 
 interface PowerCacheStoreInterface
 {

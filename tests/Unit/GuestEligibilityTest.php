@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Unit;
+namespace Plugins\Jw\PowerCache\Tests\Unit;
 
 use App\Contracts\Extension\ExtensionMiddlewareRegistryInterface;
 use App\Enums\PermissionType;
@@ -8,10 +8,10 @@ use App\Extension\HookManager;
 use App\Models\Permission;
 use App\Models\Role;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Plugins\G7\PowerCache\Eligibility\GuestEligibility;
-use Plugins\G7\PowerCache\Http\Middleware\GuestResponseCache;
-use Plugins\G7\PowerCache\Policy\RoutePolicy;
-use Plugins\G7\PowerCache\Tests\Support\PowerCacheTestCase;
+use Plugins\Jw\PowerCache\Eligibility\GuestEligibility;
+use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
+use Plugins\Jw\PowerCache\Policy\RoutePolicy;
+use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 
 final class GuestEligibilityTest extends PowerCacheTestCase
 {

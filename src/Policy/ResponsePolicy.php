@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Policy;
+namespace Plugins\Jw\PowerCache\Policy;
 
 use Symfony\Component\HttpFoundation\Response;
 

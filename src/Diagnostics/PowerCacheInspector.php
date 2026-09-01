@@ -1,14 +1,14 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Diagnostics;
+namespace Plugins\Jw\PowerCache\Diagnostics;
 
 use App\Contracts\Extension\ExtensionMiddlewareRegistryInterface;
 use Illuminate\Support\Facades\Route;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Http\Middleware\GuestResponseCache;
-use Plugins\G7\PowerCache\Policy\RoutePolicyRegistry;
-use Plugins\G7\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
+use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
+use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Throwable;
 
 final class PowerCacheInspector
@@ -52,12 +52,12 @@ final class PowerCacheInspector
         }
 
         if ($this->settings->storeDriver() === 'file'
-            && ! (bool) config('g7_power_cache.file.single_node_ack', false)) {
-            $warnings[] = 'file 드라이버 active 모드는 G7_POWER_CACHE_FILE_SINGLE_NODE=true 확인이 필요합니다.';
+            && ! (bool) config('jw_power_cache.file.single_node_ack', false)) {
+            $warnings[] = 'file 드라이버 active 모드는 JW_POWER_CACHE_FILE_SINGLE_NODE=true 확인이 필요합니다.';
         }
 
         if ($this->settings->storeDriver() === 'redis') {
-            $powerDb = (string) config('g7_power_cache.redis.database');
+            $powerDb = (string) config('jw_power_cache.redis.database');
             $defaultDb = (string) config('database.redis.default.database');
             $cacheDb = (string) config('database.redis.cache.database');
             if ($powerDb === $defaultDb || $powerDb === $cacheDb) {
@@ -124,7 +124,7 @@ final class PowerCacheInspector
                 $errors[] = '미적용 아웃박스가 있어 HIT가 차단됩니다.';
             }
             if ($this->settings->storeDriver() === 'file'
-                && ! (bool) config('g7_power_cache.file.single_node_ack', false)) {
+                && ! (bool) config('jw_power_cache.file.single_node_ack', false)) {
                 $errors[] = 'file 단일 노드 확인 전에는 active HIT가 차단됩니다.';
             }
         }
@@ -146,7 +146,7 @@ final class PowerCacheInspector
                 $errors[] = '미적용 아웃박스가 있어 HIT가 차단됩니다.';
             }
             if ($this->settings->storeDriver() === 'file'
-                && ! (bool) config('g7_power_cache.file.single_node_ack', false)) {
+                && ! (bool) config('jw_power_cache.file.single_node_ack', false)) {
                 $errors[] = 'file 단일 노드 확인 전에는 active HIT가 차단됩니다.';
             }
         }

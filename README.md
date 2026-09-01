@@ -1,8 +1,8 @@
-# G7PowerCache
+# JW PowerCache
 
-G7PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효화로 가속하는 Gnuboard7 플러그인입니다. 데이터 신선도를 TTL에 맡기지 않고, 변경 훅이 실행되면 내구성 있는 outbox를 기록한 뒤 캐시 세대를 회전합니다.
+JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효화로 가속하는 Gnuboard 7 플러그인입니다. 데이터 신선도를 TTL에 맡기지 않고, 변경 훅이 실행되면 내구성 있는 outbox를 기록한 뒤 캐시 세대를 회전합니다.
 
-현재 버전은 `0.2.0 Technical Preview`입니다. 독립 저장소 분리는 보류하고 Gnuboard7 저장소의 `plugins/_bundled/g7-power_cache`에서 개발합니다. 플러그인 디렉터리 밖의 코어 수정 없이 동작하므로 나중에 이 디렉터리를 그대로 분리할 수 있습니다.
+현재 버전은 `0.2.0 Technical Preview`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 플러그인 경계 밖의 코어 파일을 수정하지 않습니다.
 
 ## 현재 지원 범위
 
@@ -38,9 +38,19 @@ G7PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효�
 
 ## 설치
 
+관리자 플러그인 설치 화면에서 다음 GitHub 저장소 URL을 입력합니다.
+
+```text
+https://github.com/jiwonpapa/jw-power-cache
+```
+
+개발 환경에서 번들 소스로 설치하려면 저장소를 G7의 `_bundled` 디렉터리에 복제합니다.
+
 ```bash
-php artisan plugin:install g7-power_cache --vendor-mode=bundled
-php artisan plugin:activate g7-power_cache
+git clone https://github.com/jiwonpapa/jw-power-cache.git plugins/_bundled/jw-power_cache
+php artisan extension:update-autoload
+php artisan plugin:install jw-power_cache --vendor-mode=bundled
+php artisan plugin:activate jw-power_cache
 php artisan power-cache:doctor
 ```
 
@@ -51,22 +61,22 @@ php artisan power-cache:doctor
 file 드라이버로 실제 HIT를 허용하려면 단일 PHP 노드라는 운영 확인이 필요합니다.
 
 ```dotenv
-G7_POWER_CACHE_FILE_SINGLE_NODE=true
+JW_POWER_CACHE_FILE_SINGLE_NODE=true
 ```
 
 확인이 없으면 `active`여도 복구 장벽이 `file_single_node_unacknowledged`로 HIT를 차단합니다.
-file 경로를 기본 `storage/app/g7-power-cache/cache` 밖으로 옮길 경우 만료 파일 GC가 다른 디렉터리를 건드리지 않도록 `G7_POWER_CACHE_FILE_GC_SAFE_ROOT`를 전용 상위 디렉터리로 명시해야 합니다. 안전 루트 밖이면 GC는 삭제하지 않습니다.
+file 경로를 기본 `storage/app/jw-power-cache/cache` 밖으로 옮길 경우 만료 파일 GC가 다른 디렉터리를 건드리지 않도록 `JW_POWER_CACHE_FILE_GC_SAFE_ROOT`를 전용 상위 디렉터리로 명시해야 합니다. 안전 루트 밖이면 GC는 삭제하지 않습니다.
 
 ### Redis 저장소
 
 운영·다중 노드는 세션·큐·기본 캐시와 분리된 Redis DB를 사용하십시오.
 
 ```dotenv
-G7_POWER_CACHE_REDIS_HOST=127.0.0.1
-G7_POWER_CACHE_REDIS_PORT=6379
-G7_POWER_CACHE_REDIS_PASSWORD=
-G7_POWER_CACHE_REDIS_DB=7
-G7_POWER_CACHE_REDIS_PREFIX=gnuboard7:g7pc:
+JW_POWER_CACHE_REDIS_HOST=127.0.0.1
+JW_POWER_CACHE_REDIS_PORT=6379
+JW_POWER_CACHE_REDIS_PASSWORD=
+JW_POWER_CACHE_REDIS_DB=7
+JW_POWER_CACHE_REDIS_PREFIX=gnuboard7:jwpc:
 ```
 
 플러그인은 `FLUSHDB`, 태그 인덱스, 전체 key scan으로 무효화하지 않습니다. 세대만 회전하고 물리 엔트리는 retention으로 회수합니다.
@@ -128,14 +138,14 @@ php artisan power-cache:gc --days=7
 
 ## 검증
 
-저장소 루트에서 독립 테스트를 실행할 수 있습니다.
+Gnuboard 7 루트를 지정해 독립 테스트를 실행합니다.
 
 ```bash
-vendor/bin/phpunit --no-configuration \
-  --bootstrap plugins/_bundled/g7-power_cache/tests/bootstrap.php \
-  plugins/_bundled/g7-power_cache/tests
+G7_ROOT=/path/to/gnuboard7 \
+  /path/to/gnuboard7/vendor/bin/phpunit --no-configuration \
+  --bootstrap tests/bootstrap.php tests
 ```
 
 현재 독립 테스트는 **33 tests / 352 assertions**이며 guest 격리, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 운영설정 비노출, 관리자 레이아웃 규칙, 세대 단조성, 페이지/카테고리 정상 HIT의 플러그인 DB query 0, MISS→HIT, 변경 후 MISS, commit/rollback, 저장소 장애 뒤 outbox 재생을 검증합니다.
 
-실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](https://github.com/jiwonpapa/gnuboard7/blob/codex/7.0.8-performance-lab/docs/benchmark/g7-power-cache-live-ab-report-2026-08-23.md)에 기록합니다.
+실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.

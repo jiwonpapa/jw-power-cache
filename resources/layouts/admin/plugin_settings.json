@@ -4,8 +4,8 @@
     "permissions": ["core.plugins.update"],
     "extends": "_admin_base",
     "meta": {
-        "title": "$t:g7-power_cache.settings.title",
-        "description": "$t:g7-power_cache.settings.description"
+        "title": "$t:jw-power_cache.settings.title",
+        "description": "$t:jw-power_cache.settings.description"
     },
     "data_sources": [
         {
@@ -33,8 +33,8 @@
                         "type": "composite",
                         "name": "PageHeader",
                         "props": {
-                            "title": "$t:g7-power_cache.settings.title",
-                            "description": "$t:g7-power_cache.settings.description",
+                            "title": "$t:jw-power_cache.settings.title",
+                            "description": "$t:jw-power_cache.settings.description",
                             "backPath": "/admin/plugins",
                             "backLabel": "$t:admin.plugins.back_to_list"
                         }
@@ -43,7 +43,7 @@
                         "type": "basic",
                         "name": "Div",
                         "props": { "className": "mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100" },
-                        "text": "$t:g7-power_cache.settings.safety_notice"
+                        "text": "$t:jw-power_cache.settings.safety_notice"
                     },
                     {
                         "type": "basic",
@@ -59,7 +59,7 @@
                                         "type": "basic",
                                         "name": "H2",
                                         "props": { "className": "mb-5 text-lg font-semibold" },
-                                        "text": "$t:g7-power_cache.settings.sections.operation"
+                                        "text": "$t:jw-power_cache.settings.sections.operation"
                                     },
                                     {
                                         "type": "basic",
@@ -70,7 +70,7 @@
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.mode" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.mode" },
                                                     {
                                                         "type": "composite",
                                                         "name": "Select",
@@ -84,14 +84,14 @@
                                                             ]
                                                         }
                                                     },
-                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:g7-power_cache.settings.fields.mode_hint" }
+                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.mode_hint" }
                                                 ]
                                             },
                                             {
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.store_driver" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.store_driver" },
                                                     {
                                                         "type": "composite",
                                                         "name": "Select",
@@ -104,7 +104,7 @@
                                                             ]
                                                         }
                                                     },
-                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:g7-power_cache.settings.fields.store_driver_hint" }
+                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.store_driver_hint" }
                                                 ]
                                             }
                                         ]
@@ -116,7 +116,7 @@
                                 "name": "Div",
                                 "props": { "className": "rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" },
                                 "children": [
-                                    { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:g7-power_cache.settings.sections.routes" },
+                                    { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:jw-power_cache.settings.sections.routes" },
                                     {
                                         "type": "basic",
                                         "name": "Div",
@@ -128,7 +128,7 @@
                                                 "props": { "className": "flex items-center gap-3" },
                                                 "children": [
                                                     { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "cache_public_pages", "className": "h-4 w-4 rounded text-blue-600" } },
-                                                    { "type": "basic", "name": "Span", "text": "$t:g7-power_cache.settings.fields.cache_public_pages" }
+                                                    { "type": "basic", "name": "Span", "text": "$t:jw-power_cache.settings.fields.cache_public_pages" }
                                                 ]
                                             },
                                             {
@@ -137,7 +137,7 @@
                                                 "props": { "className": "flex items-center gap-3" },
                                                 "children": [
                                                     { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "cache_public_categories", "className": "h-4 w-4 rounded text-blue-600" } },
-                                                    { "type": "basic", "name": "Span", "text": "$t:g7-power_cache.settings.fields.cache_public_categories" }
+                                                    { "type": "basic", "name": "Span", "text": "$t:jw-power_cache.settings.fields.cache_public_categories" }
                                                 ]
                                             },
                                             {
@@ -146,7 +146,7 @@
                                                 "props": { "className": "flex items-center gap-3" },
                                                 "children": [
                                                     { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "cache_public_board_lists", "className": "h-4 w-4 rounded text-blue-600" } },
-                                                    { "type": "basic", "name": "Span", "text": "$t:g7-power_cache.settings.fields.cache_public_board_lists" }
+                                                    { "type": "basic", "name": "Span", "text": "$t:jw-power_cache.settings.fields.cache_public_board_lists" }
                                                 ]
                                             }
                                         ]
@@ -158,7 +158,7 @@
                                 "name": "Div",
                                 "props": { "className": "rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" },
                                 "children": [
-                                    { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:g7-power_cache.settings.sections.safety" },
+                                    { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:jw-power_cache.settings.sections.safety" },
                                     {
                                         "type": "basic",
                                         "name": "Div",
@@ -170,7 +170,7 @@
                                                 "props": { "className": "flex items-center gap-3" },
                                                 "children": [
                                                     { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "automatic_recovery", "className": "h-4 w-4 rounded text-blue-600" } },
-                                                    { "type": "basic", "name": "Span", "text": "$t:g7-power_cache.settings.fields.automatic_recovery" }
+                                                    { "type": "basic", "name": "Span", "text": "$t:jw-power_cache.settings.fields.automatic_recovery" }
                                                 ]
                                             },
                                             {
@@ -179,7 +179,7 @@
                                                 "props": { "className": "flex items-center gap-3" },
                                                 "children": [
                                                     { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "metrics_enabled", "className": "h-4 w-4 rounded text-blue-600" } },
-                                                    { "type": "basic", "name": "Span", "text": "$t:g7-power_cache.settings.fields.metrics_enabled" }
+                                                    { "type": "basic", "name": "Span", "text": "$t:jw-power_cache.settings.fields.metrics_enabled" }
                                                 ]
                                             },
                                             {
@@ -188,7 +188,7 @@
                                                 "props": { "className": "flex items-center gap-3" },
                                                 "children": [
                                                     { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "debug_headers", "className": "h-4 w-4 rounded text-blue-600" } },
-                                                    { "type": "basic", "name": "Span", "text": "$t:g7-power_cache.settings.fields.debug_headers" }
+                                                    { "type": "basic", "name": "Span", "text": "$t:jw-power_cache.settings.fields.debug_headers" }
                                                 ]
                                             }
                                         ]
@@ -200,7 +200,7 @@
                                 "name": "Div",
                                 "props": { "className": "rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" },
                                 "children": [
-                                    { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:g7-power_cache.settings.sections.limits" },
+                                    { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:jw-power_cache.settings.sections.limits" },
                                     {
                                         "type": "basic",
                                         "name": "Div",
@@ -210,7 +210,7 @@
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.max_response_kb" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.max_response_kb" },
                                                     { "type": "basic", "name": "Input", "props": { "type": "number", "name": "max_response_kb", "min": 16, "max": 4096, "className": "w-full" } }
                                                 ]
                                             },
@@ -218,16 +218,16 @@
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.retention_seconds" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.retention_seconds" },
                                                     { "type": "basic", "name": "Input", "props": { "type": "number", "name": "retention_seconds", "min": 3600, "max": 2592000, "className": "w-full" } },
-                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:g7-power_cache.settings.fields.retention_hint" }
+                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.retention_hint" }
                                                 ]
                                             },
                                             {
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.lock_wait_ms" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.lock_wait_ms" },
                                                     { "type": "basic", "name": "Input", "props": { "type": "number", "name": "lock_wait_ms", "min": 0, "max": 5000, "className": "w-full" } }
                                                 ]
                                             },
@@ -235,7 +235,7 @@
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.lock_lease_seconds" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.lock_lease_seconds" },
                                                     { "type": "basic", "name": "Input", "props": { "type": "number", "name": "lock_lease_seconds", "min": 1, "max": 120, "className": "w-full" } }
                                                 ]
                                             },
@@ -243,7 +243,7 @@
                                                 "type": "basic",
                                                 "name": "Div",
                                                 "children": [
-                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:g7-power_cache.settings.fields.recovery_batch" },
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.recovery_batch" },
                                                     { "type": "basic", "name": "Input", "props": { "type": "number", "name": "recovery_batch", "min": 1, "max": 1000, "className": "w-full" } }
                                                 ]
                                             }

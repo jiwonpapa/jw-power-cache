@@ -1,13 +1,13 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Keys;
+namespace Plugins\Jw\PowerCache\Keys;
 
 use BackedEnum;
 use Illuminate\Contracts\Routing\UrlRoutable;
 use Illuminate\Http\Request;
 use JsonException;
-use Plugins\G7\PowerCache\Policy\RoutePolicy;
-use Plugins\G7\PowerCache\Runtime\RuntimeSnapshot;
+use Plugins\Jw\PowerCache\Policy\RoutePolicy;
+use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 use Stringable;
 
 final class CanonicalRequestKey
@@ -32,8 +32,8 @@ final class CanonicalRequestKey
         $query = $this->sortRecursive($query);
 
         $payload = [
-            'format' => (int) config('g7_power_cache.format_version', 1),
-            'policy_version' => (string) config('g7_power_cache.policy_version', 'guest-api-v1'),
+            'format' => (int) config('jw_power_cache.format_version', 1),
+            'policy_version' => (string) config('jw_power_cache.policy_version', 'guest-api-v1'),
             'policy' => $policy->id,
             'site' => $snapshot->siteId,
             'epoch' => $snapshot->runtimeEpoch,

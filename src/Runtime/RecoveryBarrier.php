@@ -1,10 +1,10 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Runtime;
+namespace Plugins\Jw\PowerCache\Runtime;
 
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Invalidation\OutboxReconciler;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
 use Throwable;
 
 final class RecoveryBarrier
@@ -20,7 +20,7 @@ final class RecoveryBarrier
     {
         try {
             if ($this->store->driverName() === 'file'
-                && ! (bool) config('g7_power_cache.file.single_node_ack', false)) {
+                && ! (bool) config('jw_power_cache.file.single_node_ack', false)) {
                 return BarrierResult::blocked('file_single_node_unacknowledged');
             }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Store;
+namespace Plugins\Jw\PowerCache\Store;
 
 use FilesystemIterator;
 use RecursiveDirectoryIterator;

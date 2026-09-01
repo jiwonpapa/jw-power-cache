@@ -1,13 +1,13 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Listeners;
+namespace Plugins\Jw\PowerCache\Listeners;
 
 use App\Contracts\Extension\HookListenerInterface;
 use Illuminate\Support\Facades\Log;
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
-use Plugins\G7\PowerCache\Invalidation\InvalidationCoordinator;
-use Plugins\G7\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationCoordinator;
+use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Throwable;
 
 final class CoreInvalidationListener implements HookListenerInterface
@@ -137,7 +137,7 @@ final class CoreInvalidationListener implements HookListenerInterface
             $this->store->putRuntimeSnapshot($this->repository->snapshot());
             $this->store->clearEmergencyDirty();
         } catch (Throwable $e) {
-            Log::critical('G7PowerCache 자체 설정 저장 후 runtime epoch 회전에 실패했습니다.', [
+            Log::critical('JW PowerCache 자체 설정 저장 후 runtime epoch 회전에 실패했습니다.', [
                 'error' => $e->getMessage(),
             ]);
             $this->coordinator->invalidate(['site'], 'power-cache-settings-fallback');

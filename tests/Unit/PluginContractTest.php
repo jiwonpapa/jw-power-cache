@@ -1,21 +1,28 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Unit;
+namespace Plugins\Jw\PowerCache\Tests\Unit;
 
 use App\Rules\ValidLayoutStructure;
 use App\Rules\WhitelistedEndpoint;
 use PHPUnit\Framework\TestCase;
-use Plugins\G7\PowerCache\Listeners\ContentInvalidationListener;
-use Plugins\G7\PowerCache\Listeners\CoreInvalidationListener;
-use Plugins\G7\PowerCache\Plugin;
+use Plugins\Jw\PowerCache\Listeners\ContentInvalidationListener;
+use Plugins\Jw\PowerCache\Listeners\CoreInvalidationListener;
+use Plugins\Jw\PowerCache\Plugin;
 
 final class PluginContractTest extends TestCase
 {
     public function test_manifest_middleware_and_settings_contracts(): void
     {
         $plugin = new Plugin;
+        $manifest = json_decode(
+            file_get_contents(dirname(__DIR__, 2).'/plugin.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
 
-        self::assertSame('g7-power_cache', $plugin->getIdentifier());
+        // AbstractPlugin::getIdentifier()는 설치 디렉터리명에서 추론한다.
+        // 독립 저장소 루트의 표시용 폴더명과 G7 설치 식별자를 분리해 검증한다.
+        self::assertSame('jw-power_cache', $manifest['identifier']);
         self::assertSame('0.2.0', $plugin->getVersion());
         self::assertSame('observe', $plugin->getConfigValues()['mode']);
         self::assertSame('file', $plugin->getConfigValues()['store_driver']);

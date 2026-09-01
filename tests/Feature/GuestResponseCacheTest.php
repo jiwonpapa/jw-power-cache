@@ -1,23 +1,23 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Tests\Feature;
+namespace Plugins\Jw\PowerCache\Tests\Feature;
 
 use App\Contracts\Extension\ExtensionMiddlewareRegistryInterface;
 use App\Enums\PermissionType;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Support\Facades\DB;
-use Plugins\G7\PowerCache\Eligibility\GuestEligibility;
-use Plugins\G7\PowerCache\Http\Middleware\GuestResponseCache;
-use Plugins\G7\PowerCache\Invalidation\InvalidationApplier;
-use Plugins\G7\PowerCache\Invalidation\InvalidationCoordinator;
-use Plugins\G7\PowerCache\Invalidation\OutboxReconciler;
-use Plugins\G7\PowerCache\Keys\CanonicalRequestKey;
-use Plugins\G7\PowerCache\Policy\ResponsePolicy;
-use Plugins\G7\PowerCache\Policy\RoutePolicyRegistry;
-use Plugins\G7\PowerCache\Runtime\PowerCacheSettings;
-use Plugins\G7\PowerCache\Runtime\RecoveryBarrier;
-use Plugins\G7\PowerCache\Tests\Support\PowerCacheTestCase;
+use Plugins\Jw\PowerCache\Eligibility\GuestEligibility;
+use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationApplier;
+use Plugins\Jw\PowerCache\Invalidation\InvalidationCoordinator;
+use Plugins\Jw\PowerCache\Invalidation\OutboxReconciler;
+use Plugins\Jw\PowerCache\Keys\CanonicalRequestKey;
+use Plugins\Jw\PowerCache\Policy\ResponsePolicy;
+use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
+use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
+use Plugins\Jw\PowerCache\Tests\Support\PowerCacheTestCase;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 final class GuestResponseCacheTest extends PowerCacheTestCase
@@ -86,14 +86,14 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
         $first = $middleware->handle($makeRequest(), $origin);
         $second = $middleware->handle($makeRequest(), $origin);
         self::assertSame(1, $originCalls);
-        self::assertStringStartsWith('MISS-STORED', (string) $first->headers->get('X-G7-Power-Cache'));
-        self::assertStringStartsWith('HIT', (string) $second->headers->get('X-G7-Power-Cache'));
+        self::assertStringStartsWith('MISS-STORED', (string) $first->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('HIT', (string) $second->headers->get('X-JW-Power-Cache'));
 
         $coordinator = new InvalidationCoordinator($repository, $store, $applier);
         self::assertNotNull($coordinator->invalidate(['board:all'], 'test-board-update'));
         $third = $middleware->handle($makeRequest(), $origin);
         self::assertSame(2, $originCalls);
-        self::assertStringStartsWith('MISS-STORED', (string) $third->headers->get('X-G7-Power-Cache'));
+        self::assertStringStartsWith('MISS-STORED', (string) $third->headers->get('X-JW-Power-Cache'));
     }
 
     public function test_miss_hit_and_generation_invalidation_flow(): void
@@ -145,8 +145,8 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
         DB::disableQueryLog();
 
         self::assertSame(1, $originCalls);
-        self::assertStringStartsWith('MISS-STORED', (string) $first->headers->get('X-G7-Power-Cache'));
-        self::assertStringStartsWith('HIT', (string) $second->headers->get('X-G7-Power-Cache'));
+        self::assertStringStartsWith('MISS-STORED', (string) $first->headers->get('X-JW-Power-Cache'));
+        self::assertStringStartsWith('HIT', (string) $second->headers->get('X-JW-Power-Cache'));
         self::assertSame($first->getContent(), $second->getContent());
         self::assertSame([], $hitQueries, '정상 HIT 경로는 DB를 조회하면 안 됩니다.');
 
@@ -157,7 +157,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
 
         $third = $middleware->handle($this->request(), $origin);
         self::assertSame(2, $originCalls);
-        self::assertStringStartsWith('MISS-STORED', (string) $third->headers->get('X-G7-Power-Cache'));
+        self::assertStringStartsWith('MISS-STORED', (string) $third->headers->get('X-JW-Power-Cache'));
     }
 
     public function test_malformed_stored_entries_are_never_served(): void
@@ -232,7 +232,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
                 return new JsonResponse(['origin_call' => $originCalls]);
             });
 
-            self::assertStringStartsWith('MISS-STORED', (string) $response->headers->get('X-G7-Power-Cache'));
+            self::assertStringStartsWith('MISS-STORED', (string) $response->headers->get('X-JW-Power-Cache'));
             self::assertStringNotContainsString('"cached":true', (string) $response->getContent());
         }
 

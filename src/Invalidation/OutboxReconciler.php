@@ -1,9 +1,9 @@
 <?php
 
-namespace Plugins\G7\PowerCache\Invalidation;
+namespace Plugins\Jw\PowerCache\Invalidation;
 
-use Plugins\G7\PowerCache\Contracts\InvalidationRepositoryInterface;
-use Plugins\G7\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
+use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Throwable;
 
 final class OutboxReconciler
