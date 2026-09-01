@@ -157,7 +157,7 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 독립 테스트는 Redis 통합을 포함해 **47 tests / 413 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.10 transaction seam, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 독립 테스트는 Redis 통합을 포함해 **49 tests / 426 assertions**이며 guest 격리, 코어 호환성 fail-close, 게시판 read 권한·페이지 범위·PC/모바일 변형, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, 분산 락, Redis eviction 진단, 정상 HIT의 플러그인 DB query 0, MISS→HIT, 원본 변경과 outbox의 동일 트랜잭션 commit/rollback, 장벽 기록 실패의 outbox 보존, 저장소 장애와 outbox 자동 재생, 벤치마크 체크섬·중앙값 판정을 검증합니다. CI는 PHP 8.2/8.5, G7 7.0.10 transaction seam, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.
 
