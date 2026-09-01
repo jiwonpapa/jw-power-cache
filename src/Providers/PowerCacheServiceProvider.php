@@ -8,6 +8,7 @@ use Plugins\Jw\PowerCache\Console\Commands\GcCommand;
 use Plugins\Jw\PowerCache\Console\Commands\ModeCommand;
 use Plugins\Jw\PowerCache\Console\Commands\PurgeCommand;
 use Plugins\Jw\PowerCache\Console\Commands\ReconcileCommand;
+use Plugins\Jw\PowerCache\Console\Commands\RestoreFinalizeCommand;
 use Plugins\Jw\PowerCache\Console\Commands\StatusCommand;
 use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
 use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
@@ -56,6 +57,7 @@ final class PowerCacheServiceProvider extends BasePluginServiceProvider
                 StatusCommand::class,
                 PurgeCommand::class,
                 ReconcileCommand::class,
+                RestoreFinalizeCommand::class,
             ]);
         }
     }
