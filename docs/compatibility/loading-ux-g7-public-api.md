@@ -1,31 +1,39 @@
-# Loading UX G7 public API compatibility
+# Loading UX G7 runtime compatibility
 
 ## 결론
 
-현재 확인 가능한 공식 최신 태그 `7.0.9`와 참고 저장소 HEAD `8aa2014fd67e`에는 `core.layout.filter_merged`와 `transition_overlay.style: skeleton`은 존재하지만, 플러그인용 공개 `window.G7Core.registerComponents()` 구현은 없습니다.
+G7 문서의 `window.G7Core.registerComponents()` 예시는 공식 7.0.9 런타임에 구현되어 있지 않습니다. PowerCache는 해당 문서를 기능 근거로 사용하지 않고 실제 태그 소스에 존재하는 다음 계약만 사용합니다.
 
-문서 `docs/extension/template-workflow.md`에는 API 사용 예시가 있으나 런타임 `G7CoreGlobals.ts`에는 해당 메서드가 없고, 공식 템플릿은 현재 `getComponentRegistry()` 또는 내부 fallback을 사용합니다. JW PowerCache는 요구사항에 따라 이 private 경로를 사용하지 않습니다.
+- `core.layout.filter_merged`
+- 코어 전환 전용 `#g7-skeleton-overlay`의 생성·제거 수명
+- 공개 `window.G7Core.TransitionManager.subscribe()`
+- 양쪽 공식 템플릿에 공통으로 등록된 `Div`와 `Span`
+
+`ComponentRegistry`, `getComponentRegistry`, 비공개 등록 메서드, `__G7_COMPONENTS__`는 사용하지 않습니다.
 
 ## 태그 확인
 
-| G7 태그 | `core.layout.filter_merged` | skeleton overlay | `G7Core.registerComponents()` 런타임 |
+| G7 태그 | 병합 필터 | 전환 오버레이 DOM | TransitionManager |
 |---|---|---|---|
-| 7.0.9 | 있음 | 있음 | 없음 |
-| 7.0.8 | 있음 | 있음 | 없음 |
-| 7.0.7 이하 확인 태그 | 태그별 차이 | 태그별 차이 | 없음 |
+| 7.0.0 | 있음 | 있음 | 있음 |
+| 7.0.1~7.0.8 | 있음 | 있음 | 있음 |
+| 7.0.9 | 있음 | 있음 | 있음 |
 
 확인 명령:
 
 ```bash
 git grep 'core.layout.filter_merged' 7.0.9 -- app
-git grep "style: 'skeleton'" 7.0.9 -- resources/js
+git grep "container.id = 'g7-skeleton-overlay'" 7.0.9 -- resources/js/core/TemplateApp.ts
+git grep 'G7Core.TransitionManager' 7.0.9 -- resources/js/core/template-engine/G7CoreGlobals.ts
 git grep 'G7Core.registerComponents' 7.0.9 -- resources/js
-git log --all -S'G7Core.registerComponents' -- resources/js
 ```
+
+동일 검사를 7.0.0부터 7.0.9까지 반복해 세 계약이 모두 존재함을 확인했습니다. Loading UX 자체의 소스 확인 최소 버전은 7.0.0입니다.
 
 ## 릴리스 영향
 
-- 플러그인 에셋은 요청된 공개 API만 호출하도록 구현하고 계약 테스트합니다.
-- 공개 API가 없는 G7에서는 등록을 재시도한 뒤 조용히 중단하며 private API로 우회하지 않습니다.
-- 따라서 실제 최소 G7 버전은 아직 결정할 수 없습니다. 공개 API가 포함된 공식 태그가 나온 뒤 그 태그를 최소 버전으로 확정해야 합니다.
-- 이 차단점이 해소되기 전에는 Loading UX 실 G7 통합 완료, `0.4.0-beta.1` 버전 승격, 릴리스 후보 판정을 하지 않습니다.
+- Loading UX는 공개 등록 API 추가를 기다리지 않고 코어 수정 없이 동작합니다.
+- 전환 오버레이 설정은 변경하지 않으므로 G7이 target, fallback, wait 조건과 제거 시점을 계속 관리합니다.
+- 타사 템플릿의 내부 스피너는 명시적 프로필이 없으면 유지합니다.
+- G7이 전환 오버레이 DOM ID를 변경하는 후속 버전에서는 원본 스피너가 남도록 fail-safe하고 호환성 프로필을 갱신해야 합니다.
+- `0.4.0-beta.1` 승격 여부는 실제 G7 설치 통합과 PowerCache 전체 transaction seam 릴리스 게이트 통과 후 결정합니다.

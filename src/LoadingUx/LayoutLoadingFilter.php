@@ -22,19 +22,10 @@ final class LayoutLoadingFilter
         }
 
         $result = $layout;
-        $overlay = $result['transition_overlay'] ?? null;
-
-        if (is_array($overlay) && ($overlay['style'] ?? null) === 'spinner') {
-            $overlay['style'] = 'skeleton';
-            unset($overlay['spinner']);
-            $overlay['skeleton'] = [
-                'component' => 'JWPowerCacheSkeleton',
-                'animation' => $this->settings->animation(),
-                'iteration_count' => $this->settings->iterationCount(),
-                'delay_ms' => $this->settings->delayMilliseconds(),
-            ];
-            $result['transition_overlay'] = $overlay;
-        }
+        // G7 7.0.9에는 플러그인 컴포넌트를 런타임 레지스트리에 등록하는 공개 API가 없습니다.
+        // 전환 오버레이 설정은 그대로 보존하고, 플러그인 에셋이 코어가 만든 전환 전용
+        // #g7-skeleton-overlay의 수명만 따라 별도 DOM 스켈레톤을 표시합니다. 버튼/모달
+        // 스피너에는 이 ID가 없으므로 영향을 받지 않습니다.
 
         $layoutName = (string) ($result['layout_name'] ?? $childLayout['layout_name'] ?? '');
         if (isset($result['components']) && is_array($result['components'])) {

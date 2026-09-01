@@ -118,7 +118,7 @@ final class PluginContractTest extends TestCase
         self::assertSame('filterMergedLayout', $hooks['core.layout.filter_merged']['method'] ?? null);
     }
 
-    public function test_loading_ux_assets_are_built_and_use_only_the_public_registration_api(): void
+    public function test_loading_ux_assets_are_built_without_component_registry_dependencies(): void
     {
         $root = dirname(__DIR__, 2);
         $manifest = json_decode(file_get_contents($root.'/plugin.json'), true, flags: JSON_THROW_ON_ERROR);
@@ -130,7 +130,10 @@ final class PluginContractTest extends TestCase
         self::assertSame('global', $manifest['loading']['strategy']);
         self::assertFileExists($root.'/'.$manifest['assets']['js']['output']);
         self::assertFileExists($root.'/'.$manifest['assets']['css']['output']);
-        self::assertStringContainsString('registerComponents', $javascript);
+        self::assertStringContainsString('MutationObserver', $javascript);
+        self::assertStringContainsString('g7-skeleton-overlay', $javascript);
+        self::assertStringNotContainsString('registerComponents', $javascript);
+        self::assertStringNotContainsString('ComponentRegistry', $javascript);
         self::assertStringNotContainsString('getComponentRegistry', $javascript);
         self::assertStringNotContainsString('__G7_COMPONENTS__', $javascript);
         self::assertStringContainsString('prefers-reduced-motion', $stylesheet);

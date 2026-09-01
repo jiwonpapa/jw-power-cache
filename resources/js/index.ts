@@ -8,6 +8,6 @@ window.__JWPowerCache = {
 
 initPlugin();
 
-export { JWPowerCacheSkeleton } from './loading-ux/JWPowerCacheSkeleton';
+export { createJWPowerCacheSkeleton, profileFromPath } from './loading-ux/JWPowerCacheSkeleton';
 export { analyzeLayout } from './loading-ux/analyzeLayout';
-export { initPlugin, registerLoadingUxComponents } from './loading-ux/register';
+export { initPlugin, startLoadingUxObserver, stopLoadingUxObserver } from './loading-ux/register';

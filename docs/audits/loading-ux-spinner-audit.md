@@ -32,5 +32,6 @@
 
 - 사용자 공식 템플릿은 `_user_base`의 `main_content_area` 스피너를 상속합니다. 마이페이지 7개 화면은 `mypage_tab_content`로 범위를 좁히고, `mypage/inquiries`는 이미 skeleton입니다.
 - 관리자 공식 템플릿은 `_admin_base`의 `right_content_area` 스피너를 상속합니다. 17개 화면이 `wait_for` 또는 세부 target을 병합합니다.
-- Loading UX가 켜지면 병합 후 유효 style이 `spinner`인 오버레이만 `skeleton`으로 바꿉니다. `target`, `fallback_target`, `wait_for`, `enabled`는 그대로 보존합니다.
-- 이미 skeleton, opaque, blur, fade인 오버레이는 변경하지 않습니다.
+- Loading UX는 `transition_overlay` 값을 수정하지 않습니다. 따라서 `style`, `target`, `fallback_target`, `wait_for`, `enabled`, `spinner`는 모두 그대로 보존됩니다.
+- 플러그인 에셋은 코어가 전환 전용 `#g7-skeleton-overlay`를 생성했을 때만 원본을 숨기고 같은 target 안에 별도 스켈레톤을 표시합니다. 코어가 제거하거나 `TransitionManager`가 완료를 알리면 즉시 함께 제거합니다.
+- 버튼·모달 작업 스피너에는 전환 전용 ID가 없으므로 관찰 대상이 아닙니다.

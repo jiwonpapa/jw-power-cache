@@ -18,7 +18,7 @@ final class LayoutLoadingFilterTest extends TestCase
         self::assertSame($layout, $this->filter(['loading_ux_enabled' => false])->filter($layout));
     }
 
-    public function test_overlay_is_purely_transformed_and_preserves_control_fields(): void
+    public function test_core_transition_overlay_contract_is_preserved_for_runtime_observation(): void
     {
         $layout = $this->spinnerLayout('board/index');
         $original = $layout;
@@ -31,30 +31,20 @@ final class LayoutLoadingFilterTest extends TestCase
         ])->filter($layout, ['layout_name' => '_user_base'], $layout);
 
         self::assertSame($original, $layout, 'The input array must not be mutated.');
-        self::assertSame('skeleton', $result['transition_overlay']['style']);
-        self::assertSame('main_content_area', $result['transition_overlay']['target']);
-        self::assertSame('app_content', $result['transition_overlay']['fallback_target']);
-        self::assertSame(['posts'], $result['transition_overlay']['wait_for']);
-        self::assertTrue($result['transition_overlay']['enabled']);
-        self::assertArrayNotHasKey('spinner', $result['transition_overlay']);
-        self::assertSame([
-            'component' => 'JWPowerCacheSkeleton',
-            'animation' => 'pulse',
-            'iteration_count' => 7,
-            'delay_ms' => 180,
-        ], $result['transition_overlay']['skeleton']);
+        self::assertSame($layout['transition_overlay'], $result['transition_overlay']);
     }
 
     #[DataProvider('scopeCases')]
     public function test_scope_is_enforced(string $scope, string $baseName, bool $transformed): void
     {
-        $layout = $this->spinnerLayout($baseName === '_admin_base' ? 'admin_plugins' : 'board/index');
+        $layout = $this->officialBoardSpinnerLayout();
         $result = $this->filter([
             'loading_ux_enabled' => true,
             'loading_ux_scope' => $scope,
         ])->filter($layout, ['layout_name' => $baseName], $layout);
 
-        self::assertSame($transformed ? 'skeleton' : 'spinner', $result['transition_overlay']['style']);
+        $node = $result['components'][0]['children'][0]['children'][0];
+        self::assertSame($transformed ? 'jwpc-inline-skeleton' : 'animate-spin', strtok($node['props']['className'], ' '));
     }
 
     /** @return array<string, array{string, string, bool}> */
@@ -73,13 +63,13 @@ final class LayoutLoadingFilterTest extends TestCase
     #[DataProvider('cacheModes')]
     public function test_loading_ux_is_independent_from_cache_mode(string $mode): void
     {
-        $layout = $this->spinnerLayout('board/index');
+        $layout = $this->officialBoardSpinnerLayout();
         $result = $this->filter([
             'mode' => $mode,
             'loading_ux_enabled' => true,
         ])->filter($layout, ['layout_name' => '_user_base'], $layout);
 
-        self::assertSame('skeleton', $result['transition_overlay']['style']);
+        self::assertSame('jwpc-inline-skeleton', strtok($result['components'][0]['children'][0]['children'][0]['props']['className'], ' '));
     }
 
     /** @return array<string, array{string}> */
@@ -118,9 +108,11 @@ final class LayoutLoadingFilterTest extends TestCase
         $result = $this->filter(['loading_ux_enabled' => true])->filter($layout);
         $replacement = $result['components'][0]['children'][0]['children'][0];
 
-        self::assertSame('JWPowerCacheSkeleton', $replacement['name']);
+        self::assertSame('Div', $replacement['name']);
         self::assertSame('official-spinner', $replacement['id']);
-        self::assertSame($expectedProfile, $replacement['props']['profile']);
+        self::assertSame($expectedProfile, $replacement['props']['data-profile']);
+        self::assertStringContainsString('jwpc-inline-skeleton', $replacement['props']['className']);
+        self::assertNotEmpty($replacement['children']);
     }
 
     /** @return array<string, array{string, string, array<string, string>, array<int, string>, string, string}> */
@@ -158,7 +150,7 @@ final class LayoutLoadingFilterTest extends TestCase
 
         $result = $this->filter(['loading_ux_enabled' => true])->filter($layout);
 
-        self::assertSame('skeleton', $result['transition_overlay']['style']);
+        self::assertSame($layout['transition_overlay'], $result['transition_overlay']);
         self::assertSame($layout['components'], $result['components']);
     }
 
@@ -186,5 +178,25 @@ final class LayoutLoadingFilterTest extends TestCase
             ],
             'components' => [],
         ];
+    }
+
+    /** @return array<string, mixed> */
+    private function officialBoardSpinnerLayout(): array
+    {
+        $layout = $this->spinnerLayout('board/index');
+        $layout['components'] = [[
+            'name' => 'Div',
+            'if' => '{{!posts?.data?.board && !_global.hasError}}',
+            'children' => [[
+                'name' => 'Div',
+                'props' => ['className' => 'flex flex-col items-center py-16'],
+                'children' => [[
+                    'name' => 'Div',
+                    'props' => ['className' => 'animate-spin h-12 w-12 border-4'],
+                ]],
+            ]],
+        ]];
+
+        return $layout;
     }
 }

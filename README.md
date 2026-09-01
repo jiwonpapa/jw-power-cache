@@ -4,7 +4,7 @@ JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효
 
 현재 버전은 `0.3.0-beta.1 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. G7 7.0.10의 공식 동일 트랜잭션 mutation 훅 계약을 요구합니다.
 
-`Loading UX` 후보 기능은 전체 페이지·큰 콘텐츠의 원형 스피너를 실제 레이아웃 구조에 맞는 스켈레톤으로 바꾸며 캐시 `observe`·`active`·`bypass` 모드와 독립적으로 동작합니다. 기본값은 OFF입니다. G7 7.0.9에는 플러그인 컴포넌트를 등록하는 공개 `window.G7Core.registerComponents()` 런타임이 아직 없어 private API 우회 없이 통합 대기 상태입니다. 상세 계약은 [Loading UX 설정·지원 범위](docs/loading-ux.md)를 확인하십시오.
+`Loading UX` 후보 기능은 전체 페이지·큰 콘텐츠의 원형 스피너를 실제 레이아웃 구조에 맞는 스켈레톤으로 바꾸며 캐시 `observe`·`active`·`bypass` 모드와 독립적으로 동작합니다. 기본값은 OFF입니다. G7 7.0.9 실제 런타임에는 문서에 나온 `registerComponents()`가 없으므로, PowerCache는 컴포넌트 레지스트리를 우회하지 않고 코어 전환 오버레이의 수명과 공개 `TransitionManager` 신호만 따라가는 독립 DOM 렌더러를 사용합니다. 상세 계약은 [Loading UX 설정·지원 범위](docs/loading-ux.md)를 확인하십시오.
 
 ## 현재 지원 범위
 
@@ -184,7 +184,7 @@ php tool/run-backup-restore-drill.php
 - 전체 페이지 HTML, 바이너리, 검색 결과, 사용자별 응답은 지원하지 않습니다.
 - PHP/Laravel 부팅 전 캐시는 별도 서버 어댑터 범위입니다.
 - Loading UX는 알 수 없는 타사 템플릿에서 전환 오버레이만 교체하며 내부 스피너는 건드리지 않습니다.
-- Loading UX 실 G7 통합에는 공개 `G7Core.registerComponents()`가 포함된 공식 G7 태그가 필요합니다. 7.0.9까지는 해당 API가 없습니다.
+- Loading UX는 G7 7.0.0~7.0.9 태그에서 확인한 전환 오버레이 DOM 계약을 사용합니다. 타사 엔진이 해당 DOM ID를 변경하면 안전하게 원래 스피너를 유지하도록 호환 프로필 갱신이 필요합니다.
 
 ## 검증
 
