@@ -31,6 +31,18 @@ tool/run-benchmark-matrix.sh /path/to/gnuboard7 https://target.example.com
 
 The runner always returns the plugin to `bypass` on completion or interruption. Run it only against an explicitly approved target because it changes the plugin mode while the matrix is active. It refuses to overwrite an evidence directory containing a prior run; use a new directory for every matrix.
 
+For an approved remote production-equivalent target, use the SSH orchestrator. It preserves and restores the original mode, alternates mode order, and emits mixed plus per-route comparisons. Fixed-rate remote runs are endurance and correctness evidence, not throughput evidence.
+
+```bash
+JWPC_BENCH_REMOTE_APP_USER=remote-app-user \
+JWPC_BENCH_CONCURRENCY=5 \
+JWPC_BENCH_TARGET_RPS=8 \
+tool/run-remote-benchmark-matrix.sh \
+  ssh-target /absolute/g7/root https://target.example.com /new/evidence/path
+```
+
+The first published remote result is the [g7devops.com 5VU report](g7devops-live-5vu-2026-09-01.md).
+
 The fixed-rate matrix cannot prove throughput improvement because both modes are intentionally capped. Run a separate request-bounded uncapped burst only on an isolated benchmark instance. Clearing the application cache resets the shared rate limiter before each mode; the explicit isolation acknowledgement prevents accidental use on a live site.
 
 ```bash

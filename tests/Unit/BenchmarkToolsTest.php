@@ -79,6 +79,18 @@ final class BenchmarkToolsTest extends TestCase
         self::assertStringContainsString('JWPC_BENCH_ISOLATED=1 is required', implode("\n", $output));
     }
 
+    public function test_remote_matrix_rejects_unsafe_ssh_target_before_connecting(): void
+    {
+        $command = escapeshellarg(dirname(__DIR__, 2).'/tool/run-remote-benchmark-matrix.sh').' '
+            .escapeshellarg('host;touch /tmp/unsafe').' '
+            .escapeshellarg('/srv/g7').' '
+            .escapeshellarg('https://example.com').' 2>&1';
+        exec($command, $output, $status);
+
+        self::assertSame(2, $status);
+        self::assertStringContainsString('Unsafe SSH target', implode("\n", $output));
+    }
+
     private function writeResult(string $filename, float $p95, float $requestsPerSecond, string $checksum): string
     {
         $metrics = [
