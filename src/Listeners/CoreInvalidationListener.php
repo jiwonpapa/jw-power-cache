@@ -132,10 +132,15 @@ final class CoreInvalidationListener implements HookListenerInterface
 
         try {
             // 저장소 드라이버가 바뀌어도 이전 저장소 키가 재활성화되지 않도록 DB epoch를 회전합니다.
-            $this->store->markEmergencyDirty('power_cache_settings_change');
+            $token = $this->store->markEmergencyDirty('power_cache_settings_change');
             $this->repository->rotateRuntimeEpoch();
-            $this->store->putRuntimeSnapshot($this->repository->snapshot());
-            $this->store->clearEmergencyDirty();
+            if (! $this->store->resetControlPlane(
+                $this->repository->snapshot(),
+                (array) config('jw_power_cache.control_scopes', []),
+                $token,
+            )) {
+                throw new \RuntimeException('control-plane token changed during settings update');
+            }
         } catch (Throwable $e) {
             Log::critical('JW PowerCache 자체 설정 저장 후 runtime epoch 회전에 실패했습니다.', [
                 'error' => $e->getMessage(),

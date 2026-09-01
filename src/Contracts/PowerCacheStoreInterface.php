@@ -3,6 +3,7 @@
 namespace Plugins\Jw\PowerCache\Contracts;
 
 use Illuminate\Contracts\Cache\Lock;
+use Plugins\Jw\PowerCache\Runtime\ControlBarrierState;
 use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 
 interface PowerCacheStoreInterface
@@ -21,11 +22,14 @@ interface PowerCacheStoreInterface
 
     public function acquireLock(string $name, int $leaseSeconds): ?Lock;
 
-    public function emergencyDirty(): bool;
+    public function controlBarrier(): ?ControlBarrierState;
 
-    public function markEmergencyDirty(string $reason): void;
+    public function markEmergencyDirty(string $reason, ?string $token = null, int $eventId = 0): string;
 
-    public function clearEmergencyDirty(): void;
+    public function clearEmergencyDirty(?string $expectedToken = null): bool;
+
+    /** @param array<int, string> $scopes */
+    public function resetControlPlane(RuntimeSnapshot $snapshot, array $scopes, string $expectedToken): bool;
 
     public function runtimeSnapshot(): ?RuntimeSnapshot;
 

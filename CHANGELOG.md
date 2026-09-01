@@ -2,11 +2,31 @@
 
 ## [Unreleased]
 
+## [0.3.0-alpha.1] - 2026-09-01
+
+### Added
+
+- 실제 Redis 제어 키 유실·분산 락 통합 테스트
+- PHP/G7/Redis 및 MySQL 8.4/MariaDB 11.4 CI 매트릭스
+- 태그·버전·변경이력 검증, SHA-256 및 build provenance가 포함된 릴리스 파이프라인
+- 보안 신고, 지원, 기여, 아키텍처 장애 모델, 성능 수용 기준, Beta/1.0 출시 게이트
+- doctor의 Redis maxmemory/eviction 정책 및 누적 eviction 진단
+- 미적용 outbox를 매분 재생하는 자동 reconcile 스케줄
+
+### Fixed
+
+- Redis eviction 등으로 generation 키가 사라질 때 `0`으로 되돌아가 과거 응답이 다시 유효해질 수 있던 제어면 결함
+- 정상 트랜잭션 rollback 뒤 비상 장벽이 수동 purge 전까지 남던 문제
+- 오래된 이벤트 완료가 더 최신 dirty 장벽을 해제할 수 있는 경쟁 조건
+- dirty snapshot 자동 복구가 유효성 검사 순서 때문에 실행되지 않던 문제
+- 콘텐츠가 이미 커밋된 훅에서 장벽 기록 실패가 DB outbox까지 rollback해 복구 근거를 잃던 문제
+
 ### Changed
 
 - 제품명을 `JW PowerCache`로 확정하고 독립 저장소로 분리
 - G7 플러그인 식별자를 `jw-power_cache`, PHP 네임스페이스를 `Plugins\\Jw\\PowerCache`로 변경
 - 설정, 테이블, 저장소 경로, 환경변수 및 진단 헤더의 브랜드 접두사를 `JW`로 통일
+- barrier·snapshot·generation 유실 시 runtime epoch를 회전하고 전체 알려진 제어 scope를 fail-closed 재구축
 
 ## [0.2.0] - 2026-08-23
 

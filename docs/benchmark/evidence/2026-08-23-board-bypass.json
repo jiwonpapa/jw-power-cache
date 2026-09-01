@@ -1,0 +1,10 @@
+{
+    "source": "jw-power-cache-live-ab-report-2026-08-23.md",
+    "route": "public-board-freebd-list",
+    "mode": "bypass",
+    "requests": 80,
+    "concurrency": 4,
+    "p95_ms": 350,
+    "requests_per_second": 13.59,
+    "error_rate": 0.0
+}

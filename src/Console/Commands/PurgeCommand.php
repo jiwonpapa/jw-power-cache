@@ -56,8 +56,9 @@ final class PurgeCommand extends Command
 
         if ($scope === 'site' && $pending === 0 && $recovery['error'] === null) {
             try {
-                $store->clearEmergencyDirty();
-                $emergencyCleared = true;
+                $barrier = $store->controlBarrier();
+                $emergencyCleared = $barrier !== null
+                    && $store->clearEmergencyDirty($barrier->token);
             } catch (Throwable) {
                 // 결과의 emergency_cleared=false로 운영자에게 드러냅니다.
             }

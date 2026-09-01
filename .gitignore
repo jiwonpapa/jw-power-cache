@@ -3,4 +3,5 @@
 /.idea
 /.vscode
 /vendor
+/dist
 .DS_Store

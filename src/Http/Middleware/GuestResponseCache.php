@@ -63,7 +63,7 @@ final class GuestResponseCache
             return $this->debug($response, 'OBSERVE', $decision->reason);
         }
 
-        $barrier = $this->barrier->inspect();
+        $barrier = $this->barrier->inspect($policy->scopes);
         if (! $barrier->ready || $barrier->snapshot === null) {
             return $this->pass($request, $next, 'BYPASS', $barrier->reason);
         }
@@ -147,7 +147,7 @@ final class GuestResponseCache
                 return $this->debug($response, 'MISS', 'generation_changed');
             }
 
-            $finalBarrier = $this->barrier->inspect();
+            $finalBarrier = $this->barrier->inspect($policy->scopes);
             if (! $finalBarrier->ready
                 || $finalBarrier->snapshot === null
                 || $finalBarrier->snapshot->siteId !== $initialSnapshot->siteId

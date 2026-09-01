@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  verify-and-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Checkout JW PowerCache
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Checkout supported Gnuboard
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: gnuboard/g7
+          ref: 7.0.9
+          path: g7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
+        with:
+          php-version: '8.5'
+          extensions: mbstring, intl, pdo_sqlite
+          tools: composer:v2
+          coverage: none
+
+      - name: Verify tag is on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      - name: Validate and install test dependencies
+        run: composer validate --strict --no-check-publish
+
+      - name: Install Gnuboard dependencies
+        working-directory: g7
+        run: composer install --no-interaction --prefer-dist --no-progress --no-scripts
+
+      - name: Check syntax and style
+        run: |
+          find src tests database config -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+          g7/vendor/bin/pint --test src tests database plugin.php
+
+      - name: Run release tests
+        env:
+          G7_ROOT: ${{ github.workspace }}/g7
+          JW_POWER_CACHE_TEST_REDIS_URL: redis://127.0.0.1:6379/15
+        run: tool/test.sh
+
+      - name: Build release archive
+        run: tool/build-release.sh "$GITHUB_REF_NAME"
+
+      - name: Attest release archive
+        uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
+        with:
+          subject-path: dist/jw-power_cache-*.zip
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "JW PowerCache $GITHUB_REF_NAME"

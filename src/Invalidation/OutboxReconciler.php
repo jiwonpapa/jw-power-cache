@@ -15,7 +15,7 @@ final class OutboxReconciler
     ) {}
 
     /** @return array{attempted:int, applied:int, remaining:int, locked:bool, error:?string} */
-    public function reconcile(int $limit): array
+    public function reconcile(int $limit, ?string $expectedBarrierToken = null): array
     {
         $lock = null;
 
@@ -41,7 +41,13 @@ final class OutboxReconciler
                 $applied++;
             }
 
-            $this->repository->clearDirtyWhenRecovered();
+            $recovered = $this->repository->clearDirtyWhenRecovered();
+            if ($recovered) {
+                $this->store->putRuntimeSnapshot($this->repository->snapshot());
+                if ($expectedBarrierToken !== null) {
+                    $this->store->clearEmergencyDirty($expectedBarrierToken);
+                }
+            }
 
             return [
                 'attempted' => $attempted,

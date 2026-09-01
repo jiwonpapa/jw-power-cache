@@ -24,7 +24,7 @@ final class OutboxTransactionTest extends PowerCacheTestCase
         self::assertSame(0, $repository->pendingCount());
         self::assertSame(['page:all' => 0], $store->generations(['page:all']));
         self::assertSame(0, $repository->snapshot()->dirtyEventId);
-        self::assertTrue($store->emergencyDirty(), '롤백 후에는 운영자가 확인할 때까지 fail-closed 장벽을 유지합니다.');
+        self::assertFalse($store->controlBarrier()?->dirty, '정상 rollback callback은 자신의 장벽 토큰만 안전하게 해제해야 합니다.');
     }
 
     public function test_commit_applies_generation_after_transaction(): void
@@ -43,7 +43,7 @@ final class OutboxTransactionTest extends PowerCacheTestCase
         self::assertSame(['page:all' => $eventId], $store->generations(['page:all']));
         self::assertSame(0, $repository->pendingCount());
         self::assertSame(0, $repository->snapshot()->dirtyEventId);
-        self::assertFalse($store->emergencyDirty());
+        self::assertFalse($store->controlBarrier()?->dirty);
     }
 
     public function test_gc_only_prunes_old_applied_events(): void

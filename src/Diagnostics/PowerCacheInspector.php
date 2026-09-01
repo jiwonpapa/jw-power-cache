@@ -9,6 +9,7 @@ use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
 use Plugins\Jw\PowerCache\Policy\RoutePolicyRegistry;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
+use Plugins\Jw\PowerCache\Runtime\RecoveryBarrier;
 use Throwable;
 
 final class PowerCacheInspector
@@ -19,6 +20,7 @@ final class PowerCacheInspector
         private readonly PowerCacheStoreInterface $store,
         private readonly RoutePolicyRegistry $policies,
         private readonly ExtensionMiddlewareRegistryInterface $extensionMiddleware,
+        private readonly RecoveryBarrier $barrier,
     ) {}
 
     /** @return array<string, mixed> */
@@ -31,6 +33,7 @@ final class PowerCacheInspector
         $pending = null;
         $storeProbe = ['ok' => null, 'driver' => $this->settings->storeDriver()];
         $emergencyDirty = null;
+        $barrierPresent = false;
 
         try {
             $tablesReady = $this->repository->tablesReady();
@@ -43,10 +46,13 @@ final class PowerCacheInspector
         }
 
         try {
-            $emergencyDirty = $this->store->emergencyDirty();
             if ($probeStore) {
                 $storeProbe = $this->store->probe();
+                $this->barrier->inspect((array) config('jw_power_cache.control_scopes', []));
             }
+            $control = $this->store->controlBarrier();
+            $barrierPresent = $control !== null;
+            $emergencyDirty = $control?->dirty;
         } catch (Throwable $e) {
             $storeProbe = ['ok' => false, 'driver' => $this->settings->storeDriver(), 'error' => $e->getMessage()];
         }
@@ -62,6 +68,18 @@ final class PowerCacheInspector
             $cacheDb = (string) config('database.redis.cache.database');
             if ($powerDb === $defaultDb || $powerDb === $cacheDb) {
                 $warnings[] = 'PowerCache Redis DB가 기본/캐시 연결과 겹칩니다. 전용 DB를 사용하십시오.';
+            }
+
+            $redisProbe = is_array($storeProbe['redis'] ?? null) ? $storeProbe['redis'] : [];
+            $evictionPolicy = (string) ($redisProbe['maxmemory_policy'] ?? '');
+            if (str_starts_with($evictionPolicy, 'allkeys-')) {
+                $warnings[] = "Redis {$evictionPolicy} 정책은 제어 키도 제거할 수 있습니다. volatile-* 또는 전용 noeviction 인스턴스를 권장합니다.";
+            }
+            if ((int) ($redisProbe['evicted_keys'] ?? 0) > 0) {
+                $warnings[] = 'Redis evicted_keys가 0보다 큽니다. 메모리와 MISS/epoch 회전 추이를 확인하십시오.';
+            }
+            if (isset($redisProbe['diagnostics_error'])) {
+                $warnings[] = 'Redis eviction 설정과 통계를 읽지 못했습니다. 운영 모니터링에서 별도로 확인하십시오.';
             }
         }
 
@@ -120,6 +138,9 @@ final class PowerCacheInspector
             if ($emergencyDirty === true) {
                 $errors[] = '비상 dirty 장벽이 활성화되어 있습니다.';
             }
+            if (! $barrierPresent) {
+                $errors[] = '제어 장벽 키가 없거나 손상되었습니다.';
+            }
             if ($snapshot?->isDirty()) {
                 $errors[] = '미적용 아웃박스가 있어 HIT가 차단됩니다.';
             }
@@ -142,6 +163,9 @@ final class PowerCacheInspector
             if ($emergencyDirty === true) {
                 $errors[] = '비상 dirty 장벽이 활성화되어 있습니다.';
             }
+            if (! $barrierPresent) {
+                $errors[] = 'active 모드인데 제어 장벽 키가 없거나 손상되었습니다.';
+            }
             if ($snapshot?->isDirty()) {
                 $errors[] = '미적용 아웃박스가 있어 HIT가 차단됩니다.';
             }
@@ -163,6 +187,7 @@ final class PowerCacheInspector
             'runtime_epoch' => $snapshot?->runtimeEpoch,
             'dirty_event_id' => $snapshot?->dirtyEventId,
             'pending_outbox' => $pending,
+            'barrier_present' => $barrierPresent,
             'emergency_dirty' => $emergencyDirty,
             'store' => $storeProbe,
             'routes' => $routes,

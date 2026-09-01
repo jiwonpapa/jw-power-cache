@@ -22,6 +22,8 @@ abstract class PowerCacheTestCase extends TestCase
 
     protected Capsule $database;
 
+    private bool $usesExternalDatabase = false;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -34,19 +36,16 @@ abstract class PowerCacheTestCase extends TestCase
             'app' => ['locale' => 'ko', 'fallback_locale' => 'en'],
             'database' => ['default' => 'testing'],
             'jw_power_cache' => [
-                'format_version' => 1,
-                'policy_version' => 'guest-api-v1',
+                'format_version' => 2,
+                'policy_version' => 'guest-api-v2',
+                'control_scopes' => ['site', 'page:all', 'category:tree', 'board:all'],
                 'file' => ['single_node_ack' => true],
             ],
         ]));
         Facade::setFacadeApplication($this->app);
 
         $this->database = new Capsule($this->app);
-        $this->database->addConnection([
-            'driver' => 'sqlite',
-            'database' => ':memory:',
-            'prefix' => '',
-        ], 'testing');
+        $this->database->addConnection($this->test_database_config(), 'testing');
         $this->database->setAsGlobal();
         $this->database->bootEloquent();
         $this->database->getDatabaseManager()->setDefaultConnection('testing');
@@ -56,8 +55,20 @@ abstract class PowerCacheTestCase extends TestCase
         $this->app->instance('db', $this->database->getDatabaseManager());
         $this->app->instance('db.schema', $this->database->getConnection('testing')->getSchemaBuilder());
 
-        $migration = require dirname(__DIR__, 2).'/database/migrations/2026_08_23_000001_create_jw_power_cache_tables.php';
+        $migration = $this->migration();
+        if ($this->usesExternalDatabase) {
+            $migration->down();
+        }
         $migration->up();
+    }
+
+    protected function tearDown(): void
+    {
+        if ($this->usesExternalDatabase) {
+            $this->migration()->down();
+        }
+
+        parent::tearDown();
     }
 
     protected function repository(): DatabaseInvalidationRepository
@@ -67,7 +78,53 @@ abstract class PowerCacheTestCase extends TestCase
 
     protected function arrayStore(): LaravelPowerCacheStore
     {
-        return new LaravelPowerCacheStore(new CacheRepository(new ArrayStore(true)), 'array');
+        $store = new LaravelPowerCacheStore(new CacheRepository(new ArrayStore(true)), 'array');
+        $token = $store->markEmergencyDirty('test-bootstrap', 'test-bootstrap');
+        $store->resetControlPlane(
+            $this->repository()->snapshot(),
+            (array) config('jw_power_cache.control_scopes', []),
+            $token,
+        );
+
+        return $store;
+    }
+
+    /** @return array<string, mixed> */
+    private function test_database_config(): array
+    {
+        if (getenv('JW_POWER_CACHE_TEST_DB_DRIVER') !== 'mysql') {
+            return [
+                'driver' => 'sqlite',
+                'database' => ':memory:',
+                'prefix' => '',
+            ];
+        }
+
+        $database = (string) (getenv('JW_POWER_CACHE_TEST_DB_DATABASE') ?: '');
+        if (getenv('JW_POWER_CACHE_TEST_DB_ALLOW_DESTRUCTIVE') !== '1'
+            || preg_match('/^jw_power_cache_test(?:_[a-z0-9_]+)?$/', $database) !== 1) {
+            self::fail('External DB tests require an isolated jw_power_cache_test* database and JW_POWER_CACHE_TEST_DB_ALLOW_DESTRUCTIVE=1.');
+        }
+
+        $this->usesExternalDatabase = true;
+
+        return [
+            'driver' => 'mysql',
+            'host' => (string) (getenv('JW_POWER_CACHE_TEST_DB_HOST') ?: '127.0.0.1'),
+            'port' => (int) (getenv('JW_POWER_CACHE_TEST_DB_PORT') ?: 3306),
+            'database' => $database,
+            'username' => (string) (getenv('JW_POWER_CACHE_TEST_DB_USERNAME') ?: 'root'),
+            'password' => (string) (getenv('JW_POWER_CACHE_TEST_DB_PASSWORD') ?: ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+        ];
+    }
+
+    private function migration(): object
+    {
+        return require dirname(__DIR__, 2).'/database/migrations/2026_08_23_000001_create_jw_power_cache_tables.php';
     }
 
     /** @param array<int, string> $middleware */

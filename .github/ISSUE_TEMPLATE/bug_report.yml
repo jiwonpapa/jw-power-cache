@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a reproducible JW PowerCache defect
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report security vulnerabilities here. Follow SECURITY.md.
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: JW PowerCache, G7, PHP, database, Redis, and cache driver versions
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Minimal steps, expected behavior, and actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Sanitized doctor output
+      description: Output from php artisan power-cache:doctor --json with secrets removed
+    validations:
+      required: true

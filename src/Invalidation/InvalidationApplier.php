@@ -14,7 +14,7 @@ final class InvalidationApplier
         private readonly PowerCacheStoreInterface $store,
     ) {}
 
-    public function apply(int $eventId): bool
+    public function apply(int $eventId, ?string $barrierToken = null): bool
     {
         $event = $this->repository->find($eventId);
         if ($event === null || $event['applied_at'] !== null) {
@@ -27,13 +27,19 @@ final class InvalidationApplier
             if ($this->repository->clearDirtyWhenRecovered()) {
                 $snapshot = $this->repository->snapshot();
                 $this->store->putRuntimeSnapshot($snapshot);
-                $this->store->clearEmergencyDirty();
+                if ($barrierToken !== null) {
+                    $this->store->clearEmergencyDirty($barrierToken);
+                }
             }
 
             return true;
         } catch (Throwable $e) {
             try {
-                $this->store->markEmergencyDirty('invalidation_apply_failed:'.$eventId);
+                $this->store->markEmergencyDirty(
+                    'invalidation_apply_failed:'.$eventId,
+                    $barrierToken ?? 'event:'.$eventId,
+                    $eventId,
+                );
             } catch (Throwable) {
                 // 저장소 자체가 장애면 응답 캐시 읽기도 실패하여 원본 경로로 우회합니다.
             }

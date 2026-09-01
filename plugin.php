@@ -42,12 +42,20 @@ final class Plugin extends AbstractPlugin
 
     public function getSchedules(): array
     {
-        return [[
-            'command' => 'power-cache:gc',
-            'schedule' => 'daily',
-            'description' => 'JW PowerCache 적용 완료 아웃박스 이력 정리',
-            'enabled_config' => null,
-        ]];
+        return [
+            [
+                'command' => 'power-cache:reconcile --limit=100',
+                'schedule' => 'everyMinute',
+                'description' => 'JW PowerCache 미적용 무효화 아웃박스 복구',
+                'enabled_config' => null,
+            ],
+            [
+                'command' => 'power-cache:gc',
+                'schedule' => 'daily',
+                'description' => 'JW PowerCache 적용 완료 아웃박스 이력 정리',
+                'enabled_config' => null,
+            ],
+        ];
     }
 
     public function getPermissions(): array

@@ -2,11 +2,14 @@
 
 namespace Plugins\Jw\PowerCache\Store;
 
+use Illuminate\Cache\RedisStore;
 use Illuminate\Cache\Repository;
 use Illuminate\Contracts\Cache\Lock;
 use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
+use Plugins\Jw\PowerCache\Runtime\ControlBarrierState;
 use Plugins\Jw\PowerCache\Runtime\RuntimeSnapshot;
 use RuntimeException;
+use Throwable;
 
 final class LaravelPowerCacheStore implements PowerCacheStoreInterface
 {
@@ -49,8 +52,19 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
 
         $values = $this->cache->many(array_values($keys));
         $result = [];
+        $missing = [];
         foreach ($keys as $scope => $key) {
-            $result[$scope] = max(0, (int) ($values[$key] ?? 0));
+            $value = $values[$key] ?? null;
+            if (! is_int($value) && ! (is_string($value) && ctype_digit($value))) {
+                $missing[] = $scope;
+
+                continue;
+            }
+            $result[$scope] = max(0, (int) $value);
+        }
+
+        if ($missing !== []) {
+            throw new ControlPlaneMissingException($missing);
         }
 
         return $result;
@@ -88,24 +102,103 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
         return $lock->get() ? $lock : null;
     }
 
-    public function emergencyDirty(): bool
+    public function controlBarrier(): ?ControlBarrierState
     {
-        return $this->cache->has(self::EMERGENCY_DIRTY_KEY);
+        $state = $this->cache->get(self::EMERGENCY_DIRTY_KEY);
+        if (! is_array($state)
+            || ($state['version'] ?? null) !== 1
+            || ! is_bool($state['dirty'] ?? null)
+            || ! is_string($state['token'] ?? null)
+            || ($state['token'] ?? '') === ''
+            || ! is_numeric($state['event_id'] ?? null)
+            || ! is_string($state['reason'] ?? null)
+            || ! is_string($state['updated_at'] ?? null)) {
+            return null;
+        }
+
+        return new ControlBarrierState(
+            $state['dirty'],
+            $state['token'],
+            max(0, (int) $state['event_id']),
+            $state['reason'],
+            $state['updated_at'],
+        );
     }
 
-    public function markEmergencyDirty(string $reason): void
+    public function markEmergencyDirty(string $reason, ?string $token = null, int $eventId = 0): string
     {
-        if (! $this->cache->forever(self::EMERGENCY_DIRTY_KEY, [
-            'reason' => mb_substr($reason, 0, 500),
-            'marked_at' => now()->toIso8601String(),
-        ])) {
-            throw new RuntimeException('JW PowerCache emergency barrier write failed.');
+        $token ??= 'dirty:'.bin2hex(random_bytes(16));
+        $lock = $this->controlWriterLock();
+
+        try {
+            $current = $this->controlBarrier();
+            if ($current?->dirty === true
+                && ($eventId === 0 || $current->eventId > max(0, $eventId))) {
+                return $token;
+            }
+
+            $this->putControlBarrier(true, $token, $eventId, $reason);
+
+            return $token;
+        } finally {
+            $lock->release();
         }
     }
 
-    public function clearEmergencyDirty(): void
+    public function clearEmergencyDirty(?string $expectedToken = null): bool
     {
-        $this->cache->forget(self::EMERGENCY_DIRTY_KEY);
+        $lock = $this->controlWriterLock();
+
+        try {
+            $current = $this->controlBarrier();
+            if ($current === null
+                || ($expectedToken !== null && ! hash_equals($expectedToken, $current->token))) {
+                return false;
+            }
+
+            $this->putControlBarrier(
+                false,
+                'clean:'.bin2hex(random_bytes(16)),
+                $current->eventId,
+                'clean',
+            );
+
+            return true;
+        } finally {
+            $lock->release();
+        }
+    }
+
+    public function resetControlPlane(RuntimeSnapshot $snapshot, array $scopes, string $expectedToken): bool
+    {
+        $lock = $this->controlWriterLock();
+
+        try {
+            $current = $this->controlBarrier();
+            if ($current === null
+                || ! $current->dirty
+                || ! hash_equals($expectedToken, $current->token)) {
+                return false;
+            }
+
+            foreach ($this->normalizeScopes($scopes) as $scope) {
+                if (! $this->cache->forever($this->generationKey($scope), 0)) {
+                    throw new RuntimeException("JW PowerCache generation reset failed: {$scope}");
+                }
+            }
+
+            $this->putRuntimeSnapshot($snapshot);
+            $this->putControlBarrier(
+                false,
+                'clean:'.bin2hex(random_bytes(16)),
+                0,
+                'control_plane_reset',
+            );
+
+            return true;
+        } finally {
+            $lock->release();
+        }
     }
 
     public function runtimeSnapshot(): ?RuntimeSnapshot
@@ -157,10 +250,16 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
         $readBack = $this->cache->get($key);
         $this->cache->forget($key);
 
-        return [
+        $result = [
             'ok' => $written && hash_equals($value, (string) $readBack),
             'driver' => $this->driver,
         ];
+
+        if ($this->driver === 'redis' && $this->cache->getStore() instanceof RedisStore) {
+            $result['redis'] = $this->redisDiagnostics($this->cache->getStore());
+        }
+
+        return $result;
     }
 
     public function garbageCollect(): array
@@ -193,6 +292,80 @@ final class LaravelPowerCacheStore implements PowerCacheStoreInterface
     private function lockKey(string $name): string
     {
         return 'lock:'.hash('sha256', $name);
+    }
+
+    private function controlWriterLock(): Lock
+    {
+        $lock = $this->acquireLock('control-plane-writer', 15);
+        if ($lock === null) {
+            throw new RuntimeException('JW PowerCache control-plane writer lock is busy.');
+        }
+
+        return $lock;
+    }
+
+    private function putControlBarrier(bool $dirty, string $token, int $eventId, string $reason): void
+    {
+        if (! $this->cache->forever(self::EMERGENCY_DIRTY_KEY, [
+            'version' => 1,
+            'dirty' => $dirty,
+            'token' => $token,
+            'event_id' => max(0, $eventId),
+            'reason' => mb_substr($reason, 0, 500),
+            'updated_at' => gmdate(DATE_ATOM),
+        ])) {
+            throw new RuntimeException('JW PowerCache control barrier write failed.');
+        }
+    }
+
+    /** @return array<string, int|string|null> */
+    private function redisDiagnostics(RedisStore $store): array
+    {
+        try {
+            $connection = $store->connection();
+            $policy = $this->redisConfigValue(
+                $connection->command('config', ['GET', 'maxmemory-policy']),
+                'maxmemory-policy',
+            );
+            $maxMemory = $this->redisConfigValue(
+                $connection->command('config', ['GET', 'maxmemory']),
+                'maxmemory',
+            );
+            $stats = $connection->command('info', ['stats']);
+            $evictedKeys = null;
+            if (is_array($stats)) {
+                $statsSection = $stats['Stats'] ?? $stats['stats'] ?? $stats;
+                if (is_array($statsSection) && is_numeric($statsSection['evicted_keys'] ?? null)) {
+                    $evictedKeys = (int) $statsSection['evicted_keys'];
+                }
+            } elseif (is_string($stats)) {
+                preg_match('/^evicted_keys:(\d+)$/m', $stats, $evicted);
+                $evictedKeys = isset($evicted[1]) ? (int) $evicted[1] : null;
+            }
+
+            return [
+                'maxmemory_policy' => $policy,
+                'maxmemory_bytes' => $maxMemory === null ? null : max(0, (int) $maxMemory),
+                'evicted_keys' => $evictedKeys,
+            ];
+        } catch (Throwable $e) {
+            return ['diagnostics_error' => $e->getMessage()];
+        }
+    }
+
+    private function redisConfigValue(mixed $result, string $name): ?string
+    {
+        if (! is_array($result)) {
+            return null;
+        }
+
+        if (isset($result[$name]) && is_scalar($result[$name])) {
+            return (string) $result[$name];
+        }
+
+        $values = array_values($result);
+
+        return isset($values[1]) && is_scalar($values[1]) ? (string) $values[1] : null;
     }
 
     /** @param array<int, string> $scopes @return array<int, string> */

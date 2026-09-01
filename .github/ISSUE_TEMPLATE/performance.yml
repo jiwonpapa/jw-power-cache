@@ -1,0 +1,19 @@
+name: Performance result
+description: Share a reproducible performance regression or benchmark
+title: "[Performance]: "
+labels: [performance]
+body:
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and dataset
+      description: Hardware, software versions, route, payload size, and row counts
+    validations:
+      required: true
+  - type: textarea
+    id: protocol
+    attributes:
+      label: Protocol and raw results
+      description: Warmup, duration, concurrency, p50/p95/p99, requests/sec, errors, CPU, DB, and Redis metrics
+    validations:
+      required: true

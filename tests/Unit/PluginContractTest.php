@@ -23,7 +23,7 @@ final class PluginContractTest extends TestCase
         // AbstractPlugin::getIdentifier()는 설치 디렉터리명에서 추론한다.
         // 독립 저장소 루트의 표시용 폴더명과 G7 설치 식별자를 분리해 검증한다.
         self::assertSame('jw-power_cache', $manifest['identifier']);
-        self::assertSame('0.2.0', $plugin->getVersion());
+        self::assertSame('0.3.0-alpha.1', $plugin->getVersion());
         self::assertSame('observe', $plugin->getConfigValues()['mode']);
         self::assertSame('file', $plugin->getConfigValues()['store_driver']);
 
@@ -43,6 +43,24 @@ final class PluginContractTest extends TestCase
                 self::assertSame('action', $config['type'] ?? null);
             }
         }
+    }
+
+    public function test_recovery_and_gc_schedules_are_registered(): void
+    {
+        $schedules = (new Plugin)->getSchedules();
+
+        self::assertContains([
+            'command' => 'power-cache:reconcile --limit=100',
+            'schedule' => 'everyMinute',
+            'description' => 'JW PowerCache 미적용 무효화 아웃박스 복구',
+            'enabled_config' => null,
+        ], $schedules);
+        self::assertContains([
+            'command' => 'power-cache:gc',
+            'schedule' => 'daily',
+            'description' => 'JW PowerCache 적용 완료 아웃박스 이력 정리',
+            'enabled_config' => null,
+        ], $schedules);
     }
 
     public function test_board_list_mutations_and_guest_presentation_changes_are_covered(): void
@@ -83,6 +101,39 @@ final class PluginContractTest extends TestCase
         }
     }
 
+    public function test_settings_defaults_schema_and_admin_form_stay_in_sync(): void
+    {
+        $plugin = new Plugin;
+        $settings = json_decode(
+            file_get_contents(dirname(__DIR__, 2).'/config/settings/defaults.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $layout = json_decode(
+            file_get_contents(dirname(__DIR__, 2).'/resources/layouts/admin/plugin_settings.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+
+        $expected = array_keys($plugin->getSettingsSchema());
+        $defaults = array_keys($settings['defaults']);
+        $frontend = array_keys($settings['frontend_schema']);
+        $configValues = array_keys($plugin->getConfigValues());
+        $adminFields = [];
+        $this->collectNamedInputs($layout, $adminFields);
+
+        sort($expected);
+        sort($defaults);
+        sort($frontend);
+        sort($configValues);
+        sort($adminFields);
+
+        self::assertSame($expected, $defaults, 'defaults.json defaults mismatch');
+        self::assertSame($expected, $frontend, 'frontend_schema mismatch');
+        self::assertSame($expected, $configValues, 'Plugin config values mismatch');
+        self::assertSame($expected, array_values(array_unique($adminFields)), 'Admin form fields mismatch');
+    }
+
     public function test_admin_settings_layout_passes_core_structure_and_endpoint_rules(): void
     {
         $layout = json_decode(
@@ -110,5 +161,22 @@ final class PluginContractTest extends TestCase
         }
 
         self::assertSame([], $failures);
+    }
+
+    /** @param array<int, string> $names */
+    private function collectNamedInputs(mixed $node, array &$names): void
+    {
+        if (! is_array($node)) {
+            return;
+        }
+
+        if (in_array($node['name'] ?? null, ['Input', 'Select'], true)
+            && is_string($node['props']['name'] ?? null)) {
+            $names[] = $node['props']['name'];
+        }
+
+        foreach ($node as $child) {
+            $this->collectNamedInputs($child, $names);
+        }
     }
 }
