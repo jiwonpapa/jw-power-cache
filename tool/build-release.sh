@@ -51,7 +51,6 @@ for forbidden in \
     "${archive_root}/.github/" \
     "${archive_root}/tests/" \
     "${archive_root}/tool/" \
-    "${archive_root}/dist/" \
     "${archive_root}/.env" \
     "${archive_root}/.git" \
     "${archive_root}/vendor/"; do
@@ -66,6 +65,8 @@ for required in \
     "${archive_root}/plugin.php" \
     "${archive_root}/composer.json" \
     "${archive_root}/config/power_cache.php" \
+    "${archive_root}/dist/js/plugin.iife.js" \
+    "${archive_root}/dist/css/plugin.css" \
     "${archive_root}/src/Console/Commands/RestoreFinalizeCommand.php" \
     "${archive_root}/src/Operations/RestoreFinalizer.php" \
     "${archive_root}/database/migrations/2026_08_23_000001_create_jw_power_cache_tables.php"; do

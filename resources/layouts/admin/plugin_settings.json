@@ -114,6 +114,97 @@
                             {
                                 "type": "basic",
                                 "name": "Div",
+                                "props": { "className": "rounded-lg border border-sky-200 bg-sky-50/50 p-6 shadow-sm dark:border-sky-900 dark:bg-sky-950/20" },
+                                "children": [
+                                    { "type": "basic", "name": "H2", "props": { "className": "mb-2 text-lg font-semibold" }, "text": "$t:jw-power_cache.settings.sections.loading_ux" },
+                                    { "type": "basic", "name": "P", "props": { "className": "mb-5 text-sm text-gray-600 dark:text-gray-300" }, "text": "$t:jw-power_cache.settings.loading_ux_intro" },
+                                    {
+                                        "type": "basic",
+                                        "name": "Label",
+                                        "props": { "className": "mb-5 flex items-start gap-3" },
+                                        "children": [
+                                            { "type": "basic", "name": "Input", "props": { "type": "checkbox", "name": "loading_ux_enabled", "className": "mt-1 h-4 w-4 rounded text-sky-600" } },
+                                            {
+                                                "type": "basic",
+                                                "name": "Span",
+                                                "children": [
+                                                    { "type": "basic", "name": "Span", "props": { "className": "block font-medium" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_enabled" },
+                                                    { "type": "basic", "name": "Span", "props": { "className": "mt-1 block text-sm text-gray-500 dark:text-gray-400" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_enabled_hint" }
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "type": "basic",
+                                        "name": "Div",
+                                        "props": { "className": "grid gap-5 md:grid-cols-2" },
+                                        "children": [
+                                            {
+                                                "type": "basic",
+                                                "name": "Div",
+                                                "children": [
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_scope" },
+                                                    {
+                                                        "type": "composite",
+                                                        "name": "Select",
+                                                        "props": {
+                                                            "name": "loading_ux_scope",
+                                                            "className": "w-full",
+                                                            "options": [
+                                                                { "value": "user", "label": "$t:jw-power_cache.settings.options.scope_user" },
+                                                                { "value": "admin", "label": "$t:jw-power_cache.settings.options.scope_admin" },
+                                                                { "value": "all", "label": "$t:jw-power_cache.settings.options.scope_all" }
+                                                            ]
+                                                        }
+                                                    },
+                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_scope_hint" }
+                                                ]
+                                            },
+                                            {
+                                                "type": "basic",
+                                                "name": "Div",
+                                                "children": [
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_animation" },
+                                                    {
+                                                        "type": "composite",
+                                                        "name": "Select",
+                                                        "props": {
+                                                            "name": "loading_ux_animation",
+                                                            "className": "w-full",
+                                                            "options": [
+                                                                { "value": "wave", "label": "$t:jw-power_cache.settings.options.animation_wave" },
+                                                                { "value": "pulse", "label": "$t:jw-power_cache.settings.options.animation_pulse" },
+                                                                { "value": "none", "label": "$t:jw-power_cache.settings.options.animation_none" }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            },
+                                            {
+                                                "type": "basic",
+                                                "name": "Div",
+                                                "children": [
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_delay_ms" },
+                                                    { "type": "basic", "name": "Input", "props": { "type": "number", "name": "loading_ux_delay_ms", "min": 0, "max": 1000, "step": 10, "className": "w-full" } },
+                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_delay_hint" }
+                                                ]
+                                            },
+                                            {
+                                                "type": "basic",
+                                                "name": "Div",
+                                                "children": [
+                                                    { "type": "basic", "name": "Label", "props": { "className": "form-label" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_iteration_count" },
+                                                    { "type": "basic", "name": "Input", "props": { "type": "number", "name": "loading_ux_iteration_count", "min": 1, "max": 12, "className": "w-full" } },
+                                                    { "type": "basic", "name": "P", "props": { "className": "form-hint" }, "text": "$t:jw-power_cache.settings.fields.loading_ux_iteration_hint" }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "basic",
+                                "name": "Div",
                                 "props": { "className": "rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800" },
                                 "children": [
                                     { "type": "basic", "name": "H2", "props": { "className": "mb-5 text-lg font-semibold" }, "text": "$t:jw-power_cache.settings.sections.routes" },
@@ -318,6 +409,11 @@
         "automatic_recovery": { "type": "boolean", "default": true },
         "metrics_enabled": { "type": "boolean", "default": true },
         "debug_headers": { "type": "boolean", "default": false },
+        "loading_ux_enabled": { "type": "boolean", "default": false },
+        "loading_ux_scope": { "type": "enum", "options": ["user", "admin", "all"], "default": "all" },
+        "loading_ux_animation": { "type": "enum", "options": ["wave", "pulse", "none"], "default": "wave" },
+        "loading_ux_delay_ms": { "type": "integer", "min": 0, "max": 1000, "default": 120 },
+        "loading_ux_iteration_count": { "type": "integer", "min": 1, "max": 12, "default": 5 },
         "max_response_kb": { "type": "integer", "min": 16, "max": 4096, "default": 512 },
         "retention_seconds": { "type": "integer", "min": 3600, "max": 2592000, "default": 604800 },
         "lock_wait_ms": { "type": "integer", "min": 0, "max": 5000, "default": 500 },

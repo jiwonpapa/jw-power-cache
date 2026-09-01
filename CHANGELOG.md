@@ -2,6 +2,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- 캐시 모드와 독립적인 Loading UX 설정, 병합 레이아웃 필터, 공식 템플릿 큰 로딩 패턴 프로필
+- DataGrid·게시판·상세·카드·상품·폼·설정 화면을 분류하는 `JWPowerCacheSkeleton`과 공개 `G7Core.registerComponents()` 등록 계약
+- 120ms 지연 표시, 최소 표시시간 없음, 다크·모바일·reduced motion·접근성 지원
+
+### Changed
+
+- Loading UX 설정 저장·초기화와 플러그인 생명주기에서 병합 레이아웃 및 플러그인 번들 캐시만 정밀 무효화
+
+### Compatibility
+
+- G7 7.0.9까지 공개 컴포넌트 등록 API가 없어 실제 최소 버전과 `0.4.0-beta.1` 승격은 보류
+
 ## [0.3.0-beta.1] - 2026-09-01
 
 ### Added

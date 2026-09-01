@@ -1,4 +1,7 @@
 {
+    "loading_ux": {
+        "loading": "콘텐츠를 불러오는 중입니다."
+    },
     "settings": {
         "title": "JW PowerCache 설정",
         "description": "검증된 비회원 공개 API만 세대 기반으로 캐시합니다. 처음에는 observe 모드로 진단하십시오.",
@@ -6,9 +9,11 @@
         "sections": {
             "operation": "운영 모드",
             "routes": "캐시 허용 경로",
+            "loading_ux": "로딩 UX 개선",
             "safety": "정합성·관측",
             "limits": "저장·락 한도"
         },
+        "loading_ux_intro": "캐시 모드와 독립적으로 전체 페이지·큰 콘텐츠 로딩만 구조형 스켈레톤으로 바꿉니다. 버튼·모달 작업 스피너는 유지합니다.",
         "fields": {
             "mode": "실행 모드",
             "mode_hint": "observe는 저장·HIT 없이 적합성만 기록하고, active만 캐시를 제공합니다.",
@@ -20,12 +25,29 @@
             "automatic_recovery": "미적용 아웃박스 자동 복구",
             "metrics_enabled": "캐시 상태 메트릭 기록",
             "debug_headers": "X-JW-Power-Cache 디버그 헤더",
+            "loading_ux_enabled": "구조형 스켈레톤 사용",
+            "loading_ux_enabled_hint": "끄면 즉시 G7 기본 스피너 동작으로 돌아갑니다.",
+            "loading_ux_scope": "적용 화면",
+            "loading_ux_scope_hint": "사용자 화면, 관리자 화면 또는 전체 화면 중에서 선택합니다.",
+            "loading_ux_animation": "애니메이션",
+            "loading_ux_delay_ms": "표시 지연 (ms)",
+            "loading_ux_delay_hint": "짧은 응답에서 깜빡임을 막습니다. 응답 완료 후 최소 표시시간은 강제하지 않습니다.",
+            "loading_ux_iteration_count": "반복 행 수",
+            "loading_ux_iteration_hint": "목록·카드·폼 스켈레톤의 반복 항목 수입니다.",
             "max_response_kb": "최대 저장 응답 (KB)",
             "retention_seconds": "백엔드 보존시간 (초)",
             "retention_hint": "신선도 TTL이 아니라 무효 엔트리 회수 한도입니다.",
             "lock_wait_ms": "동시 MISS 대기 (ms)",
             "lock_lease_seconds": "생성 락 임대 (초)",
             "recovery_batch": "자동 복구 배치"
+        },
+        "options": {
+            "scope_user": "사용자 화면",
+            "scope_admin": "관리자 화면",
+            "scope_all": "전체",
+            "animation_wave": "흐르는 효과",
+            "animation_pulse": "점멸 효과",
+            "animation_none": "애니메이션 없음"
         }
     }
 }

@@ -1,0 +1,37 @@
+:root { font-family: Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #111827; background: #eef1f5; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; }
+.harness { min-height: 100vh; background: #eef1f5; }
+.harness.dark { color: #f9fafb; background: #0b1120; }
+.harness__header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 2rem; height: 64px; padding: 0 2rem; background: #0f3b63; color: white; }
+.harness__header nav { display: flex; gap: 1.25rem; flex: 1; }
+.harness__header button, .harness__actions button { padding: .55rem .8rem; border: 1px solid #cbd5e1; border-radius: .5rem; background: white; color: #1f2937; }
+.harness__shell { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 64px); }
+.harness__menu { display: grid; align-content: start; gap: .35rem; padding: 1.25rem; background: white; border-right: 1px solid #d9dee6; }
+.dark .harness__menu { background: #111827; border-color: #263244; }
+.harness__menu button { padding: .7rem .8rem; text-align: left; border: 0; border-radius: .45rem; background: transparent; color: inherit; }
+.harness__menu button[aria-current="page"] { background: #dbeafe; color: #174b7a; font-weight: 700; }
+.dark .harness__menu button[aria-current="page"] { background: #19324d; color: #bae6fd; }
+.harness__main { min-width: 0; padding: 1.5rem; }
+.harness__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: 1180px; margin: 0 auto 1rem; }
+.harness__toolbar small { color: #64748b; }
+.harness__toolbar h1 { margin: .15rem 0 0; font-size: 1.5rem; }
+.harness__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.harness__content { position: relative; min-height: 560px; max-width: 1180px; margin: 0 auto; overflow: hidden; background: #f9fafb; border: 1px solid #d9dee6; border-radius: .85rem; }
+.dark .harness__content { background: #111827; border-color: #263244; }
+.harness__sample { min-height: 560px; padding: 2rem; background: repeating-linear-gradient(135deg, transparent, transparent 18px, rgb(148 163 184 / .06) 18px, rgb(148 163 184 / .06) 36px); }
+.harness__action-spinner { display: inline-flex; align-items: center; gap: .5rem; }
+.harness__action-spinner span { width: .9rem; height: .9rem; border: 2px solid #94a3b8; border-top-color: #0f3b63; border-radius: 50%; animation: action-spin .7s linear infinite; }
+@keyframes action-spin { to { transform: rotate(360deg); } }
+@media (max-width: 720px) {
+    .harness__header { height: 56px; padding: 0 1rem; }
+    .harness__header nav { display: none; }
+    .harness__shell { grid-template-columns: 1fr; min-height: calc(100vh - 56px); }
+    .harness__menu { display: flex; gap: .25rem; overflow-x: auto; border-right: 0; border-bottom: 1px solid #d9dee6; padding: .65rem; }
+    .harness__menu button { white-space: nowrap; }
+    .harness__main { padding: .75rem; }
+    .harness__toolbar { align-items: flex-start; flex-direction: column; }
+    .harness__content, .harness__sample { min-height: 480px; }
+}
+@media (prefers-reduced-motion: reduce) { .harness__action-spinner span { animation: none; } }

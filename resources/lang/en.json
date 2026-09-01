@@ -1,4 +1,7 @@
 {
+    "loading_ux": {
+        "loading": "Loading content."
+    },
     "settings": {
         "title": "JW PowerCache Settings",
         "description": "Caches only verified guest public APIs with generation invalidation. Start in observe mode.",
@@ -6,9 +9,11 @@
         "sections": {
             "operation": "Operation",
             "routes": "Allowed routes",
+            "loading_ux": "Loading UX enhancement",
             "safety": "Consistency and observability",
             "limits": "Storage and lock limits"
         },
+        "loading_ux_intro": "Independently of cache mode, replace only page-level and large content loading with structural skeletons. Button and modal action spinners stay unchanged.",
         "fields": {
             "mode": "Mode",
             "mode_hint": "Observe records eligibility without storing or serving HITs; only active serves cache.",
@@ -20,12 +25,29 @@
             "automatic_recovery": "Automatically recover pending outbox events",
             "metrics_enabled": "Record cache state metrics",
             "debug_headers": "X-JW-Power-Cache debug header",
+            "loading_ux_enabled": "Use structural skeletons",
+            "loading_ux_enabled_hint": "Turning this off immediately restores the native G7 spinner behavior.",
+            "loading_ux_scope": "Screen scope",
+            "loading_ux_scope_hint": "Apply to user screens, administrator screens, or both.",
+            "loading_ux_animation": "Animation",
+            "loading_ux_delay_ms": "Display delay (ms)",
+            "loading_ux_delay_hint": "Prevents flashes on short responses. No minimum display time is forced after a response completes.",
+            "loading_ux_iteration_count": "Placeholder rows",
+            "loading_ux_iteration_hint": "Number of repeated placeholders in list, card, and form skeletons.",
             "max_response_kb": "Maximum stored response (KB)",
             "retention_seconds": "Backend retention (seconds)",
             "retention_hint": "This is garbage-collection retention, not a freshness TTL.",
             "lock_wait_ms": "Concurrent MISS wait (ms)",
             "lock_lease_seconds": "Fill lock lease (seconds)",
             "recovery_batch": "Automatic recovery batch"
+        },
+        "options": {
+            "scope_user": "User screens",
+            "scope_admin": "Administrator screens",
+            "scope_all": "All screens",
+            "animation_wave": "Wave",
+            "animation_pulse": "Pulse",
+            "animation_none": "No animation"
         }
     }
 }

@@ -9,6 +9,10 @@ use Illuminate\Support\Str;
 use Plugins\Jw\PowerCache\Http\Middleware\GuestResponseCache;
 use Plugins\Jw\PowerCache\Listeners\ContentInvalidationListener;
 use Plugins\Jw\PowerCache\Listeners\CoreInvalidationListener;
+use Plugins\Jw\PowerCache\Listeners\LoadingUxCacheListener;
+use Plugins\Jw\PowerCache\Listeners\LoadingUxLayoutListener;
+use Plugins\Jw\PowerCache\LoadingUx\LoadingUxCacheInvalidator;
+use Plugins\Jw\PowerCache\LoadingUx\LoadingUxSettings;
 
 final class Plugin extends AbstractPlugin
 {
@@ -37,6 +41,8 @@ final class Plugin extends AbstractPlugin
         return [
             ContentInvalidationListener::class,
             CoreInvalidationListener::class,
+            LoadingUxLayoutListener::class,
+            LoadingUxCacheListener::class,
         ];
     }
 
@@ -89,6 +95,23 @@ final class Plugin extends AbstractPlugin
             'automatic_recovery' => $this->booleanSetting('자동 아웃박스 복구', 'Automatic outbox recovery', true),
             'metrics_enabled' => $this->booleanSetting('메트릭 기록', 'Record metrics', true),
             'debug_headers' => $this->booleanSetting('디버그 응답 헤더', 'Debug response headers', false),
+            'loading_ux_enabled' => $this->booleanSetting('로딩 UX 개선', 'Loading UX enhancement', false),
+            'loading_ux_scope' => $this->enumSetting('적용 범위', 'Scope', ['user', 'admin', 'all'], 'all'),
+            'loading_ux_animation' => $this->enumSetting('스켈레톤 애니메이션', 'Skeleton animation', ['wave', 'pulse', 'none'], 'wave'),
+            'loading_ux_delay_ms' => $this->integerSetting(
+                '표시 지연(ms)',
+                'Display delay (ms)',
+                LoadingUxSettings::DEFAULT_DELAY_MS,
+                LoadingUxSettings::MIN_DELAY_MS,
+                LoadingUxSettings::MAX_DELAY_MS,
+            ),
+            'loading_ux_iteration_count' => $this->integerSetting(
+                '반복 행 수',
+                'Placeholder rows',
+                LoadingUxSettings::DEFAULT_ITERATION_COUNT,
+                LoadingUxSettings::MIN_ITERATION_COUNT,
+                LoadingUxSettings::MAX_ITERATION_COUNT,
+            ),
             'max_response_kb' => $this->integerSetting('최대 응답 크기(KB)', 'Maximum response size (KB)', 512, 16, 4096),
             'retention_seconds' => $this->integerSetting('백엔드 보존시간(초)', 'Backend retention (seconds)', 604800, 3600, 2592000),
             'lock_wait_ms' => $this->integerSetting('MISS 락 대기(ms)', 'MISS lock wait (ms)', 500, 0, 5000),
@@ -108,6 +131,11 @@ final class Plugin extends AbstractPlugin
             'automatic_recovery' => true,
             'metrics_enabled' => true,
             'debug_headers' => false,
+            'loading_ux_enabled' => false,
+            'loading_ux_scope' => 'all',
+            'loading_ux_animation' => 'wave',
+            'loading_ux_delay_ms' => LoadingUxSettings::DEFAULT_DELAY_MS,
+            'loading_ux_iteration_count' => LoadingUxSettings::DEFAULT_ITERATION_COUNT,
             'max_response_kb' => 512,
             'retention_seconds' => 604800,
             'lock_wait_ms' => 500,
@@ -119,6 +147,7 @@ final class Plugin extends AbstractPlugin
     public function activate(): bool
     {
         $this->rotateRuntimeEpoch();
+        app(LoadingUxCacheInvalidator::class)->invalidate(true);
 
         return true;
     }
@@ -126,6 +155,7 @@ final class Plugin extends AbstractPlugin
     public function deactivate(): bool
     {
         $this->rotateRuntimeEpoch();
+        app(LoadingUxCacheInvalidator::class)->invalidate(true);
 
         return true;
     }

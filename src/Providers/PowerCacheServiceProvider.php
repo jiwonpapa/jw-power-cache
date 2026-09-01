@@ -13,6 +13,7 @@ use Plugins\Jw\PowerCache\Console\Commands\StatusCommand;
 use Plugins\Jw\PowerCache\Contracts\InvalidationRepositoryInterface;
 use Plugins\Jw\PowerCache\Contracts\PowerCacheStoreInterface;
 use Plugins\Jw\PowerCache\Infrastructure\DatabaseInvalidationRepository;
+use Plugins\Jw\PowerCache\LoadingUx\LoadingUxSettings;
 use Plugins\Jw\PowerCache\Runtime\PowerCacheSettings;
 use Plugins\Jw\PowerCache\Store\LaravelPowerCacheStore;
 
@@ -29,6 +30,7 @@ final class PowerCacheServiceProvider extends BasePluginServiceProvider
         $this->registerDedicatedStores();
 
         $this->app->scoped(PowerCacheSettings::class);
+        $this->app->scoped(LoadingUxSettings::class);
         $this->app->singleton(InvalidationRepositoryInterface::class, DatabaseInvalidationRepository::class);
         $this->app->scoped(PowerCacheStoreInterface::class, function ($app): PowerCacheStoreInterface {
             $settings = $app->make(PowerCacheSettings::class);

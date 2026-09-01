@@ -7,6 +7,8 @@ use App\Rules\WhitelistedEndpoint;
 use PHPUnit\Framework\TestCase;
 use Plugins\Jw\PowerCache\Listeners\ContentInvalidationListener;
 use Plugins\Jw\PowerCache\Listeners\CoreInvalidationListener;
+use Plugins\Jw\PowerCache\Listeners\LoadingUxCacheListener;
+use Plugins\Jw\PowerCache\Listeners\LoadingUxLayoutListener;
 use Plugins\Jw\PowerCache\Plugin;
 
 final class PluginContractTest extends TestCase
@@ -37,7 +39,7 @@ final class PluginContractTest extends TestCase
 
     public function test_every_invalidation_hook_is_forced_synchronous(): void
     {
-        foreach ([ContentInvalidationListener::class, CoreInvalidationListener::class] as $listener) {
+        foreach ([ContentInvalidationListener::class, CoreInvalidationListener::class, LoadingUxCacheListener::class] as $listener) {
             foreach ($listener::getSubscribedHooks() as $hook => $config) {
                 self::assertTrue($config['sync'] ?? false, "{$hook} must be synchronous");
                 self::assertSame('action', $config['type'] ?? null);
@@ -96,9 +98,43 @@ final class PluginContractTest extends TestCase
             flags: JSON_THROW_ON_ERROR,
         );
 
+        $publicLoadingSettings = [
+            'loading_ux_enabled',
+            'loading_ux_scope',
+            'loading_ux_animation',
+            'loading_ux_delay_ms',
+            'loading_ux_iteration_count',
+        ];
         foreach ($settings['frontend_schema'] as $name => $schema) {
-            self::assertFalse($schema['expose'] ?? true, "{$name} must stay admin-only");
+            self::assertSame(in_array($name, $publicLoadingSettings, true), $schema['expose'] ?? false, $name);
         }
+    }
+
+    public function test_loading_layout_hook_uses_the_public_filter_contract(): void
+    {
+        $hooks = LoadingUxLayoutListener::getSubscribedHooks();
+
+        self::assertSame('filter', $hooks['core.layout.filter_merged']['type'] ?? null);
+        self::assertSame('filterMergedLayout', $hooks['core.layout.filter_merged']['method'] ?? null);
+    }
+
+    public function test_loading_ux_assets_are_built_and_use_only_the_public_registration_api(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $manifest = json_decode(file_get_contents($root.'/plugin.json'), true, flags: JSON_THROW_ON_ERROR);
+        $package = json_decode(file_get_contents($root.'/package.json'), true, flags: JSON_THROW_ON_ERROR);
+        $javascript = file_get_contents($root.'/'.$manifest['assets']['js']['output']);
+        $stylesheet = file_get_contents($root.'/'.$manifest['assets']['css']['output']);
+
+        self::assertSame($manifest['version'], $package['version']);
+        self::assertSame('global', $manifest['loading']['strategy']);
+        self::assertFileExists($root.'/'.$manifest['assets']['js']['output']);
+        self::assertFileExists($root.'/'.$manifest['assets']['css']['output']);
+        self::assertStringContainsString('registerComponents', $javascript);
+        self::assertStringNotContainsString('getComponentRegistry', $javascript);
+        self::assertStringNotContainsString('__G7_COMPONENTS__', $javascript);
+        self::assertStringContainsString('prefers-reduced-motion', $stylesheet);
+        self::assertStringContainsString('.dark .jwpc-skeleton', $stylesheet);
     }
 
     public function test_settings_defaults_schema_and_admin_form_stay_in_sync(): void
