@@ -5,4 +5,6 @@
 /vendor
 /node_modules
 /dist/**/*.map
+/dist/*.zip
+/dist/SHA256SUMS
 .DS_Store

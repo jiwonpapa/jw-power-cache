@@ -40,7 +40,6 @@ if ! grep -Fq -- "## [${version}]" CHANGELOG.md; then
     exit 1
 fi
 
-rm -rf dist
 mkdir -p dist
 archive="dist/jw-power_cache-${version}.zip"
 archive_root="jw-power_cache"
