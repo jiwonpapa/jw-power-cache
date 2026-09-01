@@ -44,7 +44,6 @@ final class GuestEligibility
         if ($request->headers->has('Authorization')) {
             $bearerToken = $request->bearerToken();
             if (! $policy->cacheAuthenticatedUsers
-                || $user === null
                 || ! is_string($bearerToken)
                 || $bearerToken === '') {
                 return EligibilityResult::bypass('sensitive_header');

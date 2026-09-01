@@ -305,7 +305,10 @@ final class GuestEligibilityTest extends PowerCacheTestCase
                 uri: '/api/modules/sirsoft-board/boards/freebd/posts',
                 query: ['page' => '1'],
                 cookies: $cookies,
-                headers: ['X-XSRF-TOKEN' => 'csrf'],
+                headers: [
+                    'Authorization' => 'Bearer stale-browser-token',
+                    'X-XSRF-TOKEN' => 'csrf',
+                ],
                 routePattern: 'api/modules/sirsoft-board/boards/{slug}/posts',
             );
             $role = new Role(['identifier' => 'guest']);

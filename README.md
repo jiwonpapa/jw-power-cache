@@ -153,7 +153,7 @@ php tool/run-backup-restore-drill.php
 
 - GET/HEAD 및 정확한 route allowlist만 허용
 - Proxy-Authorization와 주문·장바구니·미리보기·서명 토큰 헤더가 있으면 BYPASS
-- Authorization은 인증 사용자가 확정된 게시판 목록만 허용하고 사용자별 키로 격리
+- 게시판 목록의 Bearer 요청은 `optional.sanctum` 결과가 사용자면 사용자별 키, 아니면 공개 키로 격리
 - 공개 게시판 GET의 표준 세션·XSRF만 허용하며 알 수 없는 쿠키는 BYPASS
 - 페이지·카테고리의 인증 요청은 BYPASS
 - route 정책에 없는 query/middleware가 있으면 BYPASS
