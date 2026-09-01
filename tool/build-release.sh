@@ -35,7 +35,7 @@ if [[ "${verify_only}" != "1" ]]; then
     fi
 fi
 
-if ! rg -q "^## \\[${version//./\\.}\\]" CHANGELOG.md; then
+if ! grep -Fq -- "## [${version}]" CHANGELOG.md; then
     echo "CHANGELOG.md has no ${version} release entry." >&2
     exit 1
 fi
@@ -55,7 +55,7 @@ for forbidden in \
     "${archive_root}/.env" \
     "${archive_root}/.git" \
     "${archive_root}/vendor/"; do
-    if printf '%s\n' "${entries}" | rg -Fq "${forbidden}"; then
+    if printf '%s\n' "${entries}" | grep -Fq -- "${forbidden}"; then
         echo "Release archive contains forbidden path: ${forbidden}" >&2
         exit 1
     fi
@@ -67,7 +67,7 @@ for required in \
     "${archive_root}/composer.json" \
     "${archive_root}/config/power_cache.php" \
     "${archive_root}/database/migrations/2026_08_23_000001_create_jw_power_cache_tables.php"; do
-    if ! printf '%s\n' "${entries}" | rg -Fxq "${required}"; then
+    if ! printf '%s\n' "${entries}" | grep -Fxq -- "${required}"; then
         echo "Release archive is missing required runtime file: ${required}" >&2
         exit 1
     fi

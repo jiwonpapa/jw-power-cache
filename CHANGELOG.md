@@ -15,6 +15,7 @@
 - 실제 미들웨어 실행 순서에 맞춰 HIT에서도 optional auth·throttle이 유지되는 운영 제한을 명확화
 - 릴리스 빌드가 테스트·CI·도구·환경파일 포함을 거부하고 필수 런타임 파일·manifest 버전·ZIP 무결성을 검증하도록 강화
 - 실제 배포 ZIP은 태그가 정확히 HEAD를 가리키고 tracked worktree가 깨끗할 때만 생성하며, CI는 명시적인 dry-run 모드로 계약을 검증
+- 릴리스 빌드의 텍스트 검사를 표준 `grep`으로 제한해 GitHub Actions 기본 러너에서 별도 도구 없이 실행
 
 ## [0.3.0-alpha.2] - 2026-09-01
 
