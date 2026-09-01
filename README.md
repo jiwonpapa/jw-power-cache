@@ -1,8 +1,38 @@
+<p align="center">
+  <img src="docs/assets/jw-powercache-intro.webp" alt="JW PowerCache - Gnuboard 7 guest API cache" width="100%">
+</p>
+
 # JW PowerCache
 
-JW PowerCache는 **검증된 비회원 공개 JSON API**를 세대 기반 무효화로 가속하는 Gnuboard 7 플러그인입니다. 데이터 신선도를 TTL에 맡기지 않고, 변경 훅이 실행되면 내구성 있는 outbox를 기록한 뒤 캐시 세대를 회전합니다.
+**Gnuboard 7 공개 API를 더 빠르게 제공하는 비회원 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
 
 현재 버전은 `0.3.0-beta.2 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
+
+## 플러그인 용도
+
+- 로그인하지 않은 방문자가 반복 조회하는 공개 JSON API의 응답속도 개선
+- 페이지·상품·게시글 변경 시 TTL 대기 없이 관련 캐시 즉시 무효화
+- 인증·쿠키·민감 헤더가 있는 요청은 캐시하지 않고 원본으로 우회
+- 캐시 장애 시 사이트 오류를 만들지 않고 원본 응답으로 fail-open
+- 별도 저장소를 만들지 않고 **G7 관리자가 선택한 표준 캐시 저장소** 사용
+
+## 빠른 설치
+
+1. G7 관리자에서 **플러그인 설치**를 열고 아래 저장소 URL을 입력합니다.
+
+   ```text
+   https://github.com/jiwonpapa/jw-power-cache
+   ```
+
+2. `JW PowerCache`를 설치·활성화합니다. 최초 실행 모드는 안전한 `observe`입니다.
+3. 서버에서 진단 후 캐시를 켭니다.
+
+   ```bash
+   php artisan power-cache:doctor
+   php artisan power-cache:mode active
+   ```
+
+별도 `JW_POWER_CACHE_REDIS_*` 환경변수는 필요하지 않습니다. 여러 웹 노드를 운영한다면 G7 관리자에서 Redis 같은 공유 캐시 저장소를 선택하십시오.
 
 ## 현재 지원 범위
 
@@ -38,15 +68,9 @@ Redis eviction이나 운영 실수로 barrier, snapshot, generation 키 하나�
 
 `retention_seconds`는 오래된 물리 엔트리를 회수하기 위한 백엔드 보존시간입니다. 데이터 신선도 TTL이 아닙니다. 세대가 바뀐 엔트리는 보존시간이 남아도 즉시 MISS입니다.
 
-## 설치
+## 터미널 설치
 
-관리자 플러그인 설치 화면에서 다음 GitHub 저장소 URL을 입력합니다.
-
-```text
-https://github.com/jiwonpapa/jw-power-cache
-```
-
-개발 환경에서 번들 소스로 설치하려면 저장소를 G7의 `_bundled` 디렉터리에 복제합니다.
+개발·서버 환경에서 번들 소스로 설치하려면 저장소를 G7의 `_bundled` 디렉터리에 복제합니다.
 
 PowerCache는 별도 저장소·Redis 연결·환경변수를 만들지 않습니다. G7 관리자가 시스템 캐시 설정에서 선택한 표준 저장소를 그대로 사용합니다.
 
