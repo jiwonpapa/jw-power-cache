@@ -30,6 +30,15 @@ spl_autoload_register(static function (string $class): void {
 
     $relative = substr($class, strlen($prefix));
     $root = dirname(__DIR__);
+    if (str_starts_with($relative, 'Tests\\')) {
+        $path = $root.'/tests/'.str_replace('\\', '/', substr($relative, strlen('Tests\\'))).'.php';
+        if (is_file($path)) {
+            require_once $path;
+        }
+
+        return;
+    }
+
     foreach ([$root.'/src/', $root.'/'] as $base) {
         $path = $base.str_replace('\\', '/', $relative).'.php';
         if (is_file($path)) {
