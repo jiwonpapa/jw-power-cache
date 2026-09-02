@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/jw-powercache-intro.webp" alt="JW PowerCache - Gnuboard 7 API response cache" width="100%">
+  <img src="docs/assets/intro-concepts-20260902/03-blush-browser.webp" alt="JW PowerCache - Gnuboard 7 response caching with the JW SOFT logo" width="100%">
 </p>
 
 # JW PowerCache
