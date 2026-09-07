@@ -25,7 +25,7 @@ final class PluginContractTest extends TestCase
         // AbstractPlugin::getIdentifier()는 설치 디렉터리명에서 추론한다.
         // 독립 저장소 루트의 표시용 폴더명과 G7 설치 식별자를 분리해 검증한다.
         self::assertSame('jw-power_cache', $manifest['identifier']);
-        self::assertSame('0.4.0-beta.1', $plugin->getVersion());
+        self::assertSame('0.4.0-beta.2', $plugin->getVersion());
         self::assertSame('observe', $plugin->getConfigValues()['mode']);
         self::assertArrayNotHasKey('store_driver', $plugin->getConfigValues());
         self::assertSame('>=7.0.9', $manifest['g7_version']);

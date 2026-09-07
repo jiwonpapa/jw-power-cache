@@ -31,6 +31,18 @@ final class OutboxReconciler
                 ];
             }
 
+            // Scheduled/CLI recovery has no caller token. Capture the current
+            // outbox barrier before replay; never clear a newer writer's token
+            // or a separate control-plane reset that is still in progress.
+            if ($expectedBarrierToken === null) {
+                $control = $this->store->controlBarrier();
+                if ($control?->dirty === true
+                    && $control->eventId > 0
+                    && $control->token === 'event:'.$control->eventId) {
+                    $expectedBarrierToken = $control->token;
+                }
+            }
+
             $attempted = 0;
             $applied = 0;
             foreach ($this->repository->pending(max(1, $limit)) as $event) {

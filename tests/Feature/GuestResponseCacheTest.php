@@ -4,6 +4,7 @@ namespace Plugins\Jw\PowerCache\Tests\Feature;
 
 use App\Contracts\Extension\ExtensionMiddlewareRegistryInterface;
 use App\Enums\PermissionType;
+use App\Helpers\TimezoneHelper;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Http\Request;
@@ -344,7 +345,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
             $policy,
             $snapshot,
             app()->getLocale(),
-            date_default_timezone_get(),
+            TimezoneHelper::getUserTimezone(),
         );
         $generations = $store->generations($policy->scopes);
         $baseEntry = [

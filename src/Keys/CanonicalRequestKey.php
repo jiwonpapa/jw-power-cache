@@ -33,7 +33,7 @@ final class CanonicalRequestKey
 
         $payload = [
             'format' => (int) config('jw_power_cache.format_version', 1),
-            'policy_version' => (string) config('jw_power_cache.policy_version', 'response-api-v3'),
+            'policy_version' => (string) config('jw_power_cache.policy_version', 'response-api-v4'),
             'policy' => $policy->id,
             'site' => $snapshot->siteId,
             'epoch' => $snapshot->runtimeEpoch,

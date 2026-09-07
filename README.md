@@ -6,7 +6,7 @@
 
 **Gnuboard 7 공개 API를 더 빠르게 제공하는 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
 
-현재 버전은 `0.4.0-beta.1 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
+현재 버전은 `0.4.0-beta.2 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
 
 ## 플러그인 용도
 
@@ -47,6 +47,7 @@
 | 페이지·카테고리 인증 요청 | BYPASS |
 | 일반 브라우저 세션·XSRF | 게시판 안전 GET에서 허용 |
 | 미등록 cookie·query·route middleware | BYPASS |
+| 본문 또는 업로드 입력이 있는 GET/HEAD | BYPASS |
 | 게시글 상세·상품·검색·장바구니·주문 | 현재 캐시하지 않음 |
 | 응답 형식 | 200 JSON, 크기 상한 이내 |
 | 저장 금지 | Set-Cookie, no-store, redirect, 인증/다운로드 헤더, 미지원 Vary |
@@ -54,6 +55,8 @@
 카테고리 트리에 공개 상품 수가 포함되므로 카테고리뿐 아니라 상품 생성·수정·삭제·일괄 변경도 `category:tree` 세대를 회전합니다.
 
 게시판 목록은 원본 `permission:user,sirsoft-board.{slug}.posts.read`와 같은 권한을 HIT 전에도 확인합니다. 공개 요청은 공개 키, 로그인 요청은 사용자 ID별 키로 격리해 `is_author`와 `abilities`가 다른 사용자에게 섞이지 않습니다. 글·댓글·첨부·게시판 설정·권한·작성자 표시가 바뀌면 `board:all` 세대를 즉시 회전합니다. `created_at_formatted`, `is_new`, 조회수처럼 DB 쓰기 없이도 표시가 변하는 값만 60초 시계 버킷으로 제한하며, PC/모바일 `per_page` 차이도 별도 키로 격리합니다.
+
+날짜 표시에 사용하는 G7의 실제 사용자 시간대를 캐시 키에도 적용합니다. JSON·폼 본문이 있는 GET/HEAD는 원본으로 우회해 URL 조건과 다른 결과가 일반 조회 캐시에 섞이지 않도록 합니다. `0.4.0-beta.2`는 정책 키를 `response-api-v4`로 변경하므로 이전 정책의 응답을 재사용하지 않습니다.
 
 ## 정합성 모델
 
@@ -127,6 +130,8 @@ php artisan power-cache:restore-finalize --yes
 
 활성 플러그인은 `reconcile --limit=100`을 매분 예약해 저장소 장애 뒤 남은 outbox를 자동 재생하며, 일일 GC는 적용 완료된 감사 이력만 정리합니다. 서버의 Laravel scheduler가 실제로 실행 중이어야 합니다.
 
+예약·수동 복구는 재생 시작 시 확인한 outbox 장벽 토큰만 해제합니다. 처리 도중 시작된 더 최신 갱신이나 별도의 제어면 재구축 장벽은 해제하지 않습니다. 이전 버전에서 outbox 처리는 완료됐지만 장벽만 남은 상태도 다음 복구 실행에서 해제합니다.
+
 ## 백업 복구 순서
 
 백업에는 G7 전체 데이터베이스, `storage/app/plugins/jw-power_cache/settings/setting.json`, 설치한 플러그인 ZIP과 체크섬을 함께 보관하십시오. Redis는 원본 데이터가 아니므로 백업본을 복원하지 않습니다.
@@ -154,6 +159,7 @@ php tool/run-backup-restore-drill.php
 다음 항목은 관리자 설정으로 완화할 수 없습니다.
 
 - GET/HEAD 및 정확한 route allowlist만 허용
+- 원문·파싱된 본문·파일 입력이 있는 GET/HEAD는 BYPASS
 - Proxy-Authorization와 주문·장바구니·미리보기·서명 토큰 헤더가 있으면 BYPASS
 - 게시판 목록의 Bearer 요청은 `optional.sanctum` 결과가 사용자면 사용자별 키, 아니면 공개 키로 격리
 - 공개 게시판 GET의 표준 세션·XSRF만 허용하며 알 수 없는 쿠키는 BYPASS
@@ -167,6 +173,7 @@ php tool/run-backup-restore-drill.php
 - HEAD MISS는 원본만 호출하고 캐시를 생성하지 않음
 - Set-Cookie/no-store/인증·다운로드·redirect 응답은 미저장
 - 세대 확인이나 복구 장벽 확인이 실패하면 stale 응답 제공 금지
+- 일반 HIT·락 획득 후 HIT·락 대기 후 HIT 모두 응답 읽기 뒤 장벽 토큰·site/epoch·세대를 재확인
 
 기본 Laravel JSON 응답의 `private, no-cache`는 브라우저 캐시 정책으로 보존하되, 서버 내부 origin cache 저장 자체를 막지는 않습니다. `no-store`만 절대 저장 금지입니다.
 
@@ -194,7 +201,7 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 공식 G7 7.0.9 로컬 회귀 테스트는 **58 tests / 443 assertions / 5 environment skips**입니다. 공개·로그인 사용자 키 격리, 브라우저 세션/XSRF, 게시판 read 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 outbox commit/rollback, 저장소 장애와 자동 복구, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 공식 G7 7.0.9·PHP 8.5.3·SQLite·Redis 7.4 로컬 회귀 테스트는 **103 tests / 612 assertions / 2 capability skips**입니다. 제외된 2개는 공식 G7에 없는 동일 트랜잭션 훅 capability 검사입니다. 공개·로그인 사용자 키 격리, GET 본문 우회, 사용자 시간대 분리, 게시판 read 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 outbox commit/rollback, 예약 복구와 동시 갱신, 정책 업그레이드, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 공개 HTTPS에서 수행한 최신 5VU 비교 결과는 [g7devops.com 실서버 벤치마크](docs/benchmark/g7devops-live-5vu-2026-09-01.md)에 기록되어 있습니다. 4개 주요 API, 총 2,880건에서 오류·응답 불일치 없이 경로별 p95가 49.0~68.9% 개선됐습니다.
 

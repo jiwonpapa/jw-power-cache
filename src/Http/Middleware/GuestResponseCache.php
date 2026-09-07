@@ -2,6 +2,7 @@
 
 namespace Plugins\Jw\PowerCache\Http\Middleware;
 
+use App\Helpers\TimezoneHelper;
 use Closure;
 use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Http\Request;
@@ -74,9 +75,9 @@ final class GuestResponseCache
                 $policy,
                 $barrier->snapshot,
                 app()->getLocale(),
-                date_default_timezone_get(),
+                TimezoneHelper::getUserTimezone(),
             );
-            $entry = $this->validEntry($requestKey, $policy);
+            $entry = $this->validEntry($requestKey, $policy, $barrier->snapshot);
             if ($entry !== null) {
                 $this->metric('hit.'.$policy->id);
 
@@ -99,7 +100,7 @@ final class GuestResponseCache
         }
 
         if ($lock === null) {
-            $entry = $this->waitForWinner($requestKey, $policy);
+            $entry = $this->waitForWinner($requestKey, $policy, $barrier->snapshot);
             if ($entry !== null) {
                 $this->metric('hit_after_wait.'.$policy->id);
 
@@ -123,7 +124,7 @@ final class GuestResponseCache
         $originStarted = false;
 
         try {
-            $existing = $this->validEntry($requestKey, $policy);
+            $existing = $this->validEntry($requestKey, $policy, $initialSnapshot);
             if ($existing !== null) {
                 $this->metric('hit_after_lock.'.$policy->id);
 
@@ -147,11 +148,7 @@ final class GuestResponseCache
                 return $this->debug($response, 'MISS', 'generation_changed');
             }
 
-            $finalBarrier = $this->barrier->inspect($policy->scopes);
-            if (! $finalBarrier->ready
-                || $finalBarrier->snapshot === null
-                || $finalBarrier->snapshot->siteId !== $initialSnapshot->siteId
-                || $finalBarrier->snapshot->runtimeEpoch !== $initialSnapshot->runtimeEpoch) {
+            if (! $this->barrier->stillReady($initialSnapshot, $policy->scopes, $after)) {
                 $this->metric('not_stored.barrier_changed');
 
                 return $this->debug($response, 'MISS', 'barrier_changed');
@@ -194,7 +191,7 @@ final class GuestResponseCache
     }
 
     /** @return array<string, mixed>|null */
-    private function waitForWinner(string $requestKey, RoutePolicy $policy): ?array
+    private function waitForWinner(string $requestKey, RoutePolicy $policy, RuntimeSnapshot $initialSnapshot): ?array
     {
         $waitMilliseconds = $this->settings->lockWaitMilliseconds();
         if ($waitMilliseconds <= 0) {
@@ -205,7 +202,7 @@ final class GuestResponseCache
         do {
             usleep(random_int(40_000, 80_000));
             try {
-                $entry = $this->validEntry($requestKey, $policy);
+                $entry = $this->validEntry($requestKey, $policy, $initialSnapshot);
                 if ($entry !== null) {
                     return $entry;
                 }
@@ -218,7 +215,7 @@ final class GuestResponseCache
     }
 
     /** @return array<string, mixed>|null */
-    private function validEntry(string $requestKey, RoutePolicy $policy): ?array
+    private function validEntry(string $requestKey, RoutePolicy $policy, RuntimeSnapshot $initialSnapshot): ?array
     {
         $entry = $this->store->getResponse($requestKey);
         if ($entry === null
@@ -256,9 +253,9 @@ final class GuestResponseCache
             return null;
         }
 
-        $current = $this->store->generations($entryScopes);
-
-        return $current === $entry['generations'] ? $entry : null;
+        return $this->barrier->stillReady($initialSnapshot, $entryScopes, $entry['generations'])
+            ? $entry
+            : null;
     }
 
     /** @param array<string, mixed> $entry */

@@ -17,6 +17,36 @@ final class RecoveryBarrier
         private readonly PowerCacheSettings $settings,
     ) {}
 
+    /**
+     * Recheck after reading an entry or building an origin response. This check
+     * never performs recovery or DB queries on the normal HIT path.
+     *
+     * @param  array<int, string>  $scopes
+     * @param  array<string, int>  $generations
+     */
+    public function stillReady(RuntimeSnapshot $expected, array $scopes, array $generations): bool
+    {
+        $control = $this->store->controlBarrier();
+        if ($control === null || $control->dirty) {
+            return false;
+        }
+
+        $snapshot = $this->store->runtimeSnapshot();
+        if (! $this->readySnapshot($snapshot)
+            || $snapshot->siteId !== $expected->siteId
+            || $snapshot->runtimeEpoch !== $expected->runtimeEpoch) {
+            return false;
+        }
+
+        $current = $this->store->generations($scopes);
+        $finalControl = $this->store->controlBarrier();
+
+        return $current === $generations
+            && $finalControl !== null
+            && ! $finalControl->dirty
+            && hash_equals($control->token, $finalControl->token);
+    }
+
     /** @param array<int, string> $scopes */
     public function inspect(array $scopes = []): BarrierResult
     {

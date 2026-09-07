@@ -1,6 +1,6 @@
 # JW PowerCache 배포 로드맵
 
-## 현재 상태: 0.4.0-beta.1 Open Source Beta
+## 현재 상태: 0.4.0-beta.2 Open Source Beta
 
 현재 목표는 **신뢰할 수 있는 오픈소스 Beta 배포**입니다. 절대 정합성이나 전체 사이트 캐시를 선전하지 않습니다.
 

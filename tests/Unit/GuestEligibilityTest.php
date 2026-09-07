@@ -44,6 +44,28 @@ final class GuestEligibilityTest extends PowerCacheTestCase
         self::assertTrue($result->eligible);
     }
 
+    #[DataProvider('bodyRequests')]
+    public function test_get_and_head_bodies_are_never_cache_eligible(string $method, string $body, string $contentType): void
+    {
+        $request = Request::create('/api/modules/sirsoft-page/pages/about', $method, [], [], [], [
+            'CONTENT_TYPE' => $contentType,
+        ], $body);
+        $result = (new GuestEligibility)->evaluate($request, $this->policy);
+
+        self::assertFalse($result->eligible);
+        self::assertSame('request_body', $result->reason);
+    }
+
+    public static function bodyRequests(): array
+    {
+        return [
+            ['GET', '{"search":"hidden"}', 'application/json'],
+            ['HEAD', '{"page":9}', 'application/json'],
+            ['GET', 'per_page=1', 'application/x-www-form-urlencoded'],
+            ['GET', '0', 'text/plain'],
+        ];
+    }
+
     public function test_registered_origin_response_filter_forces_bypass(): void
     {
         $filterHook = 'sirsoft-ecommerce.category.filter_public_list_result';

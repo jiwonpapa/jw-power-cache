@@ -33,6 +33,15 @@ final class GuestEligibility
             return EligibilityResult::bypass('method');
         }
 
+        // Controllers may consume JSON/form input through all()/input(), while
+        // the cache key only includes the explicitly allowed query parameters.
+        if ($request->getContent() !== ''
+            || $request->request->count() > 0
+            || $request->files->count() > 0
+            || ($request->isJson() && $request->json()->count() > 0)) {
+            return EligibilityResult::bypass('request_body');
+        }
+
         $user = $request->user();
 
         foreach (self::ALWAYS_SENSITIVE_HEADERS as $header) {
