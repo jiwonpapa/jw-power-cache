@@ -1,11 +1,13 @@
-# Support
+# 지원 안내
 
-Use GitHub Issues for reproducible bugs and feature requests. Include JW PowerCache, G7, PHP, database, cache driver, and Redis versions plus sanitized `power-cache:doctor --json` output.
+재현 가능한 오류와 기능 요청은 GitHub Issues에 등록해 주십시오. JW PowerCache·G7·PHP·DB·캐시 드라이버·Redis 버전과 민감정보를 제거한 `power-cache:doctor --json` 결과를 함께 첨부해 주십시오.
 
-Community support is best-effort. Commercial response times, installation, production tuning, and incident assistance require a separate support agreement. Security reports must follow [SECURITY.md](SECURITY.md), not public issues.
+커뮤니티 지원은 가능한 범위에서 제공합니다. 상용 응답시간 보장, 설치, 운영 성능 조정, 장애 대응은 별도 지원 계약이 필요합니다. 보안 문제는 공개 이슈 대신 [보안 정책](SECURITY.md)의 비공개 신고 절차를 따라 주십시오.
 
-The 0.3 beta line supports official G7 7.0.9 or later with Page 1.1.0, Board 1.1.0, and Ecommerce 1.2.0 or later. JW PowerCache uses the standard file, Redis, or Memcached store selected by the G7 administrator through `CacheInterface`; it does not register a private store. Multi-node deployments must select a shared store in G7.
+현재 0.4.0은 공식 G7 7.0.9 이상과 Page 1.1.0·Board 1.1.0·Ecommerce 1.2.0 이상을 지원합니다. JW PowerCache는 `CacheInterface`를 통해 G7 관리자가 선택한 표준 파일·Redis·Memcached 저장소를 사용하며, 전용 저장소를 등록하지 않습니다. 여러 서버에서 운영할 때는 G7에서 공유 저장소를 선택해야 합니다.
 
-Authenticated caching is supported only for public board lists and is isolated by authenticated user ID. Other personalized or authenticated responses, multi-node file cache, direct SQL changes without an explicit purge, modified route middleware contracts, and platforms outside the compatibility matrix remain unsupported. G7 7.0.9 post-commit hooks retain a short crash window and therefore do not provide the stronger atomic guarantee of an in-transaction hook seam.
+인증된 요청의 캐시는 공개 게시판 목록에만 적용하며, 인증된 사용자 ID별로 격리합니다. 그 밖의 개인화·인증 응답, 여러 서버에 걸친 파일 캐시, 명시적 무효화 없이 직접 실행한 SQL 변경, 수정된 경로 미들웨어 계약, 호환성 검증 범위 밖의 환경은 지원하지 않습니다. G7 7.0.9에서 커밋 후 실행되는 훅은 프로세스가 비정상 종료될 수 있는 짧은 구간을 남기므로, 트랜잭션 내부 훅과 같은 강한 원자성 보장을 제공하지 않습니다.
 
-Loading UX supports the official `sirsoft-basic` and `sirsoft-admin_basic` transition overlays. Four audited large-content spinner profiles are included; action and modal spinners are intentionally excluded. Third-party templates receive transition-overlay-only compatibility until an explicit profile is added. The runtime path uses no component registry or private G7 API and was source-checked across G7 tags 7.0.0 through 7.0.9.
+로딩 화면 개선 기능(Loading UX)은 공식 `sirsoft-basic`·`sirsoft-admin_basic` 전환 오버레이를 지원합니다. 검토를 마친 큰 콘텐츠 스피너 패턴 4개를 포함하며, 버튼 작업·모달 스피너는 의도적으로 제외합니다. 별도 프로필이 없는 타사 템플릿은 전환 오버레이만 지원합니다. 컴포넌트 레지스트리나 비공개 G7 API를 사용하지 않으며, 전환 동작은 G7 7.0.0~7.0.9 태그 소스에서 확인했습니다.
+
+라이선스는 [한국어 안내](LICENSE.ko.md)와 [MIT 원문](LICENSE)을 참고하십시오.

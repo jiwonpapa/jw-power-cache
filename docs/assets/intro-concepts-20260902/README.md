@@ -1,65 +1,66 @@
-# JW PowerCache — intro image collection
+# JW PowerCache 소개 이미지 모음
 
-Created 2026-09-02 with the built-in image generation tool using the user-provided JW SOFT logo.
-Variant 3 (Blush browser) was selected as the main repository README banner.
-The README uses its optimized WebP copy; all three original PNG files are retained here.
+2026-09-02에 사용자가 제공한 JW SOFT 로고와 내장 이미지 생성 도구로 제작했습니다.
+3번 시안인 연분홍 브라우저 구성을 저장소 README의 대표 배너로 선택했습니다.
+README에는 최적화된 WebP 사본을 사용하며, 세 시안의 원본 PNG도 이 폴더에 보관합니다.
 
-## Designs
+## 시안
 
-1. [Ivory editorial](01-ivory-editorial.png) — warm ivory, soft paper layers.
-2. [Mint cache flow](02-mint-cache-flow.png) — clear request → cache → response explanation.
-3. [Blush browser](03-blush-browser.png) — browser-first product illustration, **selected main banner**.
+1. [아이보리 편집 디자인](01-ivory-editorial.png) — 따뜻한 아이보리와 부드러운 종이 겹침
+2. [민트색 캐시 흐름](02-mint-cache-flow.png) — 요청 → 캐시 → 응답을 설명하는 구성
+3. [연분홍 브라우저](03-blush-browser.png) — 브라우저 중심의 제품 일러스트, **대표 배너로 선택**
 
-![1. Ivory editorial](01-ivory-editorial.png)
+![1. 아이보리 편집 디자인](01-ivory-editorial.png)
 
-![2. Mint cache flow](02-mint-cache-flow.png)
+![2. 민트색 캐시 흐름](02-mint-cache-flow.png)
 
-![3. Blush browser — selected main banner](03-blush-browser.webp)
+![3. 연분홍 브라우저 — 대표 배너](03-blush-browser.webp)
 
-All three originals are 1774 × 887 PNG banners (2:1). The source logo is unchanged.
-UI panels and request labels are conceptual illustrations, not API documentation.
-No performance measurements or speed multipliers are claimed.
+원본 세 장은 모두 1774 × 887 PNG 배너이며 가로세로 비율은 2:1입니다. 원본 로고는 변경하지 않았습니다.
+화면 패널과 요청 표시는 개념 설명용 그림이며 API 명세가 아닙니다. 실측 성능이나 속도 배수를 주장하지 않습니다.
 
-## Final prompt set
+## 최종 제작 지시의 한국어 정리
 
-### Variant 1
+아래는 당시 영어 제작 지시를 한국어로 옮긴 내용입니다. 공통 지시는 한 번만 정리하고 시안별 구성을 이어서 기록합니다. 과거 원문은 Git 이력에 남아 있습니다.
 
-```text
-Use case: ads-marketing.
-Asset type: one finished wide GitHub README introduction banner for the existing Gnuboard 7 plugin JW PowerCache, landscape approximately 2:1, high-resolution 2000x1000 composition. Make one banner only, not a contact sheet.
-Primary request: Soft, modern, contemporary, very simple and elegant. It must instantly communicate a caching plugin: repeated web-data requests reuse a stored response and are returned quickly, reducing repeated server work. This is API response caching, not a payment app, not a money app, not a full browser replacement.
-Input image 1: supporting brand-logo insert. It is the user's actual JW SOFT sticker logo: the same little girl in pink with hands under her face, pink hearts, white rabbit, and JW SOFT ribbon. Preserve this identity and its exact face, pose, colors, proportions and lettering. Do not redraw as a different child or mascot. Remove the baked-in gray checkerboard background cleanly around the entire sticker. Use the complete logo just once, very small, around 7 percent of banner width and never above 9 percent, a secondary signature not the main subject. Preserve readable ribbon. No checkerboard anywhere.
-Typography: premium calm editorial sans serif, dark charcoal rather than black. Render product name exactly "JW PowerCache". Korean exact copy "그누보드 7 응답 캐시 플러그인" and "반복 조회는 가볍게, 페이지는 빠르게." These are the only headline/supporting copy. No invented benchmarks, timings, percentages, version numbers or promises.
-Avoid: cyberpunk, neon, lasers, glowing circuit boards, holograms, space backgrounds, black tech dashboards, harsh gradients, giant logo, children elsewhere in the scene, rockets, enormous lightning bolts, heavy gloss, clutter, fake UI paragraphs, charts, sales buttons, watermarks. Ample whitespace and clear hierarchy. Show the function primarily with beautifully composed recognizable browser UI fragments and reusable response layers, not a giant database cylinder.
-Concept 1 — warm ivory editorial.
-Backdrop: clean warm ivory with extremely subtle paper tactility, softly lit, restrained blush accents taken from the reference logo and warm taupe shadows.
-Composition: a premium asymmetrical README banner. Left half is elegant typographic space: small complete JW SOFT logo near the top of the copy block, generous gap, large single-line or well-balanced two-line "JW PowerCache", then two concise Korean lines. The logo stays small. Right half is one coherent soft dimensional paper illustration, not a grid: a stack of reusable response cards with a discreet cache symbol, a short curved path connecting into one clean browser panel with a community board list, showing that stored responses return to the page. Two smaller incoming request sheets and one returned sheet explain reuse. Gentle rounded corners, cream paper layers, very soft contact shadows. The browser panel is crisp and simple, with abstract lines and small muted coral content accents, no fake paragraphs. A tiny label "CACHE" on the response stack and "HIT" on the returning sheet are allowed. Main illustration has a restrained sophisticated product-design feel. Keep the whole design airy, not overly cute and not a diagram poster.
-```
+### 공통 지시
 
-### Variant 2
+- 용도: 광고·홍보.
+- 결과물: 기존 그누보드7 플러그인 JW PowerCache를 소개하는 GitHub README용 가로 배너 한 장. 약 2:1 비율, 2000×1000 고해상도 구성을 요청하며 여러 시안을 한 화면에 모은 결과물은 만들지 않습니다.
+- 핵심 인상: 부드럽고 현대적이며 매우 간결하고 우아하게 구성합니다. 반복되는 웹 데이터 요청에 저장된 응답을 재사용해 빠르게 반환하고 서버의 반복 작업을 줄이는 캐시 기능을 즉시 알아볼 수 있어야 합니다. 결제·금융 앱이나 브라우저 대체 제품이 아닌 API 응답 캐시입니다.
+- 로고: 제공된 JW SOFT 스티커 로고를 보조 브랜드 요소로 사용합니다. 분홍 옷을 입고 턱 아래에 손을 둔 소녀, 분홍 하트, 흰 토끼, JW SOFT 리본의 얼굴·자세·색·비율·문자를 그대로 보존합니다. 다른 아이나 마스코트로 다시 그리지 않습니다. 스티커 둘레의 회색 체크무늬 배경을 깨끗이 제거합니다.
+- 로고 크기·횟수: 전체 로고를 한 번만, 배너 너비의 약 7%로 작게 사용하며 9%를 넘기지 않습니다. 주인공이 아닌 보조 서명으로 배치하고 리본 글자가 읽히게 합니다. 어디에도 체크무늬를 남기지 않습니다.
+- 글꼴: 차분하고 고급스러운 편집 디자인용 고딕체, 검정 대신 짙은 먹색을 사용합니다.
+- 고정 문구: 제품명은 정확히 “JW PowerCache”, 한국어 문구는 “그누보드 7 응답 캐시 플러그인”, “반복 조회는 가볍게, 페이지는 빠르게.”만 사용합니다. 임의의 성능 수치·시간·백분율·버전·보장을 추가하지 않습니다.
+- 제외 요소: 사이버펑크, 네온, 레이저, 빛나는 회로, 홀로그램, 우주 배경, 검은 기술 대시보드, 강한 그라데이션, 거대한 로고, 장면 속 다른 아이, 로켓, 큰 번개, 과도한 광택, 복잡한 장식, 가짜 UI 문단, 차트, 판매 버튼, 워터마크.
+- 표현 방식: 충분한 여백과 명확한 정보 위계를 둡니다. 거대한 원통형 DB보다 알아보기 쉬운 브라우저 화면 조각과 재사용 응답 층으로 기능을 보여줍니다.
 
-```text
-Use case: ads-marketing.
-Asset type: one finished wide GitHub README introduction banner for the existing Gnuboard 7 plugin JW PowerCache, landscape approximately 2:1, high-resolution 2000x1000 composition. Make one banner only, not a contact sheet.
-Primary request: Soft, modern, contemporary, very simple and elegant. It must instantly communicate a caching plugin: repeated web-data requests reuse a stored response and are returned quickly, reducing repeated server work. This is API response caching, not a payment app, not a money app, not a full browser replacement.
-Input image 1: supporting brand-logo insert. It is the user's actual JW SOFT sticker logo: the same little girl in pink with hands under her face, pink hearts, white rabbit, and JW SOFT ribbon. Preserve this identity and its exact face, pose, colors, proportions and lettering. Do not redraw as a different child or mascot. Remove the baked-in gray checkerboard background cleanly around the entire sticker. Use the complete logo just once, very small, around 7 percent of banner width and never above 9 percent, a secondary signature not the main subject. Preserve readable ribbon. No checkerboard anywhere.
-Typography: premium calm editorial sans serif, dark charcoal rather than black. Render product name exactly "JW PowerCache". Korean exact copy "그누보드 7 응답 캐시 플러그인" and "반복 조회는 가볍게, 페이지는 빠르게." These are the only headline/supporting copy. No invented benchmarks, timings, percentages, version numbers or promises.
-Avoid: cyberpunk, neon, lasers, glowing circuit boards, holograms, space backgrounds, black tech dashboards, harsh gradients, giant logo, children elsewhere in the scene, rockets, enormous lightning bolts, heavy gloss, clutter, fake UI paragraphs, charts, sales buttons, watermarks. Ample whitespace and clear hierarchy. Show the function primarily with beautifully composed recognizable browser UI fragments and reusable response layers, not a giant database cylinder.
-Concept 2 — soft mint cache flow.
-Backdrop: almost-white with the slightest cool mint tint, bright and matte, no gradient glow.
-Composition: refined horizontal visual story across the lower two thirds with three simple spaced elements: a small fan of matching web request slips, a compact mint cache tray holding the same response card, and one clean browser board-list window receiving a ready response via a short curved arrow. The arrow returning from the cache to the browser is the clearest line, making repeated response reuse instantly understandable. These are elegant soft paper-and-ceramic miniatures, thin outlines and subtle shadows, not technical machinery. Three small exact Korean labels can read "반복 요청", "캐시", "빠른 응답". Above the story, "JW PowerCache" and the two Korean copy lines form a calm balanced left-aligned typography group. Place the complete reference logo as a very small brand seal in the opposite upper corner, about 7 percent width. Accent the response card in dusty pink matching the logo, with muted sage on the cache. Spacious Swiss-inspired layout and near-flat orthographic view. No thick 3D bases or ornamental objects. This variant must look distinctly like a polished minimal explanatory brand banner.
-```
+### 1번 — 따뜻한 아이보리 편집 디자인
 
-### Variant 3
+배경은 깨끗하고 따뜻한 아이보리로, 아주 미세한 종이 질감과 부드러운 조명을 사용합니다. 로고에서 가져온 절제된 분홍 포인트와 따뜻한 회갈색 그림자를 더합니다.
 
-```text
-Use case: ads-marketing.
-Asset type: one finished wide GitHub README introduction banner for the existing Gnuboard 7 plugin JW PowerCache, landscape approximately 2:1, high-resolution 2000x1000 composition. Make one banner only, not a contact sheet.
-Primary request: Soft, modern, contemporary, very simple and elegant. It must instantly communicate a caching plugin: repeated web-data requests reuse a stored response and are returned quickly, reducing repeated server work. This is API response caching, not a payment app, not a money app, not a full browser replacement.
-Input image 1: supporting brand-logo insert. It is the user's actual JW SOFT sticker logo: the same little girl in pink with hands under her face, pink hearts, white rabbit, and JW SOFT ribbon. Preserve this identity and its exact face, pose, colors, proportions and lettering. Do not redraw as a different child or mascot. Remove the baked-in gray checkerboard background cleanly around the entire sticker. Use the complete logo just once, very small, around 7 percent of banner width and never above 9 percent, a secondary signature not the main subject. Preserve readable ribbon. No checkerboard anywhere.
-Typography: premium calm editorial sans serif, dark charcoal rather than black. Render product name exactly "JW PowerCache". Korean exact copy "그누보드 7 응답 캐시 플러그인" and "반복 조회는 가볍게, 페이지는 빠르게." These are the only headline/supporting copy. No invented benchmarks, timings, percentages, version numbers or promises.
-Avoid: cyberpunk, neon, lasers, glowing circuit boards, holograms, space backgrounds, black tech dashboards, harsh gradients, giant logo, children elsewhere in the scene, rockets, enormous lightning bolts, heavy gloss, clutter, fake UI paragraphs, charts, sales buttons, watermarks. Ample whitespace and clear hierarchy. Show the function primarily with beautifully composed recognizable browser UI fragments and reusable response layers, not a giant database cylinder.
-Concept 3 — blush modern browser.
-Backdrop: very pale warm blush and porcelain white, refined and light with subtle natural shadows.
-Composition: editorial product hero with a large readable "JW PowerCache" title and the two Korean lines on the left, calm left alignment. On the right, one large elegant browser panel in a slight three-quarter view showing a clean board/article-list layout: horizontal title rows, small circular avatars, thin gray dividers, one muted rose selected row. Behind and below the panel, three thin identical response cards form a tidy stack; one card slides along a compact curved return arrow into the browser, visibly communicating reused cached data, not file uploading. Place a small pill with exact text "CACHE HIT" near that returning card, without numerical measurements. The visual must emphasize immediate reuse and a lighter page, not generic blank UI. Place the complete reference JW SOFT logo once as a small signature near the lower-left copy area, around 7 percent banner width, leaving generous whitespace around it. Sophisticated soft 2.5D UI illustration with translucent-free matte surfaces, restrained warm gray linework and blush highlights. No other badges or slogans.
-```
+고급스럽고 비대칭적인 README 배너를 구성합니다. 왼쪽은 우아한 글자 영역으로, 문구 상단 근처에 작은 전체 로고를 놓고 넉넉한 간격 뒤에 큰 “JW PowerCache” 제목을 한 줄 또는 균형 잡힌 두 줄로 표시합니다. 그 아래 한국어 두 문장을 배치하며 로고는 작게 유지합니다.
+
+오른쪽은 격자 대신 하나로 연결된 부드러운 입체 종이 그림입니다. 은은한 캐시 기호가 있는 재사용 응답 카드 더미와, 커뮤니티 게시판 목록을 표시한 깨끗한 브라우저 패널을 짧은 곡선 경로로 연결합니다. 작은 유입 요청 종이 두 장과 반환 종이 한 장으로 재사용을 설명합니다.
+
+부드러운 둥근 모서리, 크림색 종이 층, 아주 연한 접촉 그림자를 사용합니다. 브라우저에는 단순한 추상 선과 작은 산호색 포인트만 두며 가짜 문단을 넣지 않습니다. 응답 더미의 “CACHE”와 반환 종이의 “HIT”라는 작은 표시는 허용합니다. 정돈된 제품 디자인 느낌을 유지하고 지나치게 귀엽거나 도표 포스터처럼 만들지 않습니다.
+
+### 2번 — 부드러운 민트색 캐시 흐름
+
+배경은 거의 흰색에 아주 옅은 차가운 민트색을 더한 밝은 무광으로 구성하며, 빛나는 그라데이션은 사용하지 않습니다.
+
+아래쪽 3분의 2 영역에 세 요소를 간격을 두고 가로로 배치합니다. 같은 모양의 웹 요청 종이를 작은 부채꼴로 펼친 모습, 동일한 응답 카드를 담은 작은 민트색 캐시 받침, 짧은 곡선 화살표로 준비된 응답을 받는 브라우저 게시판 창입니다. 캐시에서 브라우저로 돌아오는 화살표를 가장 명확히 표시해 반복 응답 재사용을 즉시 이해하게 합니다.
+
+얇은 외곽선과 은은한 그림자의 종이·도자기 미니어처처럼 표현하며 기술 장비처럼 그리지 않습니다. 작은 한국어 표시는 “반복 요청”, “캐시”, “빠른 응답”을 사용할 수 있습니다.
+
+상단에는 제품명과 한국어 두 문장을 차분한 왼쪽 정렬로 배치합니다. 전체 로고는 반대쪽 위 모서리에 너비 약 7%의 작은 브랜드 인장으로 둡니다. 응답 카드는 로고에 맞춘 탁한 분홍, 캐시는 절제된 세이지색을 사용합니다. 여유 있는 스위스식 편집 구성과 거의 평평한 정투영 시점을 사용하고, 두꺼운 입체 받침이나 장식물을 넣지 않습니다. 세련되고 최소한의 설명형 브랜드 배너로 구분되게 합니다.
+
+### 3번 — 연분홍 현대적 브라우저
+
+배경은 아주 옅고 따뜻한 연분홍과 도자기 흰색으로 구성하고, 자연스러운 그림자를 은은하게 더합니다.
+
+왼쪽에는 크고 잘 읽히는 “JW PowerCache” 제목과 한국어 두 문장을 차분하게 왼쪽 정렬합니다. 오른쪽에는 살짝 비스듬한 3/4 시점의 우아하고 큰 브라우저 패널을 배치합니다. 게시판·글 목록은 가로 제목 행, 작은 원형 아바타, 얇은 회색 구분선, 차분한 장미색 선택 행 하나로 표현합니다.
+
+패널 뒤쪽 아래에 동일한 얇은 응답 카드 세 장을 가지런히 쌓습니다. 한 카드는 작은 곡선 반환 화살표를 따라 브라우저로 들어가며, 파일 업로드가 아닌 캐시 데이터 재사용임을 명확히 보여줍니다. 반환 카드 근처의 작은 알약 모양 표시에 정확히 “CACHE HIT”를 쓰되 측정 수치는 넣지 않습니다. 일반적인 빈 UI보다 즉각적인 재사용과 가벼워진 페이지를 강조합니다.
+
+전체 JW SOFT 로고를 문구 영역 왼쪽 아래에 너비 약 7%의 작은 서명으로 한 번 배치하고 주변 여백을 충분히 둡니다. 반투명하지 않은 무광 표면, 절제된 따뜻한 회색 선, 연분홍 강조를 사용하는 부드럽고 세련된 2.5차원 UI 일러스트로 구성합니다. 다른 배지나 구호는 넣지 않습니다.

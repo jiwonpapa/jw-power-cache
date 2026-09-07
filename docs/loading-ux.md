@@ -1,4 +1,4 @@
-# Loading UX
+# 로딩 화면 개선 기능(Loading UX)
 
 Loading UX는 PowerCache 응답 캐시와 독립된 선택 기능입니다. 비활성화하면 레이아웃과 코어 전환 오버레이를 건드리지 않아 G7 기본 스피너 동작으로 즉시 복귀합니다.
 
@@ -6,17 +6,17 @@ Loading UX는 PowerCache 응답 캐시와 독립된 선택 기능입니다. 비�
 
 | 키 | 기본값 | 허용값 | 설명 |
 |---|---:|---|---|
-| `loading_ux_enabled` | `false` | boolean | 기능 ON/OFF |
+| `loading_ux_enabled` | `false` | 참·거짓 | 기능 켜기·끄기 |
 | `loading_ux_scope` | `all` | `user`, `admin`, `all` | 적용 화면 |
 | `loading_ux_animation` | `wave` | `wave`, `pulse`, `none` | 스켈레톤 애니메이션 |
 | `loading_ux_delay_ms` | `120` | 0~1000 | 빠른 응답의 깜빡임 방지 지연 |
-| `loading_ux_iteration_count` | `5` | 1~12 | 반복 placeholder 수 |
+| `loading_ux_iteration_count` | `5` | 1~12 | 반복 자리표시자 수 |
 
 표시 지연 중 응답이 끝나면 타이머를 취소합니다. 표시된 뒤에도 최소 표시시간을 강제하지 않습니다.
 
 ## 실제 G7 런타임 적용 방식
 
-G7 7.0.9 문서에는 `window.G7Core.registerComponents()` 예시가 있지만 실제 런타임 구현은 없습니다. PowerCache는 문서 예시나 private `ComponentRegistry`를 사용하지 않습니다.
+G7 7.0.9 문서에는 `window.G7Core.registerComponents()` 예시가 있지만 실제 런타임 구현은 없습니다. PowerCache는 문서 예시나 비공개 `ComponentRegistry`를 사용하지 않습니다.
 
 1. 병합 레이아웃 필터는 공식 템플릿 내부의 명시적 큰 로딩 패턴 4개만 기본 `Div`·`Span` 트리로 교체합니다.
 2. `transition_overlay` 설정은 원형 그대로 보존해 target, fallback, wait 조건과 코어 제거 시점을 G7이 계속 소유합니다.
@@ -46,6 +46,6 @@ DOM 렌더러는 현재 경로와 전달받은 컴포넌트 이름·ID를 이용
 
 ## 호환성
 
-필터 훅, 코어 전환 오버레이 ID, `TransitionManager`는 G7 7.0.0~7.0.9 태그에서 소스 확인했습니다. Loading UX 자체의 확인 가능한 최소 런타임은 7.0.0입니다. 다만 PowerCache 전체 플러그인의 최소 버전은 응답 캐시 transaction seam 계약을 별도로 따릅니다.
+필터 훅, 코어 전환 오버레이 ID, `TransitionManager`는 G7 7.0.0~7.0.9 태그에서 소스 확인했습니다. Loading UX 자체의 확인 가능한 최소 런타임은 7.0.0입니다. 다만 PowerCache 전체 플러그인의 최소 버전은 응답 캐시 트랜잭션 훅 계약을 별도로 따릅니다.
 
 근거와 태그 검사 명령은 [G7 런타임 호환성 기록](compatibility/loading-ux-g7-public-api.md)에 있습니다.

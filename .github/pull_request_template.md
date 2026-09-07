@@ -1,11 +1,12 @@
-## Summary
+## 변경 요약
 
-Describe the user-visible and correctness impact.
+사용자에게 보이는 변화와 데이터 정합성에 미치는 영향을 설명해 주십시오.
 
-## Verification
+## 검증
 
-- [ ] Regression test added or reason documented
-- [ ] Composer validation, Pint, and test suite pass
-- [ ] Redis/DB behavior verified when affected
-- [ ] Performance evidence attached for performance claims
-- [ ] No route, identity, cookie, query, middleware, or response safety contract was weakened
+- [ ] 회귀 테스트를 추가했거나 추가하지 않은 이유를 기록했습니다.
+- [ ] Composer 검사, Pint, 전체 테스트를 통과했습니다.
+- [ ] Redis·DB 동작에 영향이 있다면 해당 동작을 검증했습니다.
+- [ ] 성능 개선 주장에 측정 근거를 첨부했습니다.
+- [ ] 경로·사용자 식별·쿠키·쿼리·미들웨어·응답 안전성 계약을 약화하지 않았습니다.
+- [ ] 문서와 사용자 안내를 한국어로 작성했습니다.

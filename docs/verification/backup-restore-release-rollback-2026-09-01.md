@@ -1,44 +1,44 @@
-# Backup restore and release rollback verification — 2026-09-01
+# 백업 복구와 릴리스 롤백 검증 — 2026-09-01
 
-## Verdict
+## 판정
 
-The isolated Redis-backed G7 instance passed a destructive logical backup/restore drill and a release rollback cycle from the current `0.3.0-alpha.3` candidate to `0.3.0-alpha.2` and back. Settings and site identity were preserved, restored outbox data matched the backup, the runtime epoch rotated, and a response retained in Redis under the old epoch was not reusable.
+Redis를 사용하는 격리 G7 환경에서 데이터를 의도적으로 변조한 뒤 논리 백업을 복구하는 연습과, 당시 `0.3.0-alpha.3` 후보에서 `0.3.0-alpha.2`로 되돌렸다가 다시 업데이트하는 절차를 통과했다. 설정·사이트 ID가 유지됐고 아웃박스가 백업과 일치하게 복원됐다. 실행 세대는 회전했으며, Redis에 남겨 둔 이전 세대 응답은 재사용되지 않았다.
 
-This is local release-candidate evidence on the pinned G7 transaction-seam commit. No production system, release tag, or GitHub release was changed.
+고정된 G7 트랜잭션 내부 훅 커밋의 로컬 릴리스 후보 검증이다. 운영 시스템·릴리스 태그·GitHub 릴리스는 변경하지 않았다.
 
-## Environment and artifacts
+## 당시 환경과 검증 파일
 
-- Core: Gnuboard 7 commit `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
-- Database/cache: MySQL 8.4.11 and Redis 7.4.11 with `noeviction`
-- Database: isolated `g7_powercache_install`
-- Candidate source commit: `67fd1b68`
-- Rollback archive: `0.3.0-alpha.2`, SHA-256 `290080fe88394ad10398f0d29c9df44d4ed45f78e45aa80707db20d3fa4bd02b`
-- Upgrade archive: `0.3.0-alpha.3`, SHA-256 `3fc601a31ac5e69cfad87f5ea4a3d2c19007980235cb6c4dc75db4e9c05193bb`
+- 코어: 그누보드7 커밋 `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
+- DB·캐시: MySQL 8.4.11, Redis 7.4.11(`noeviction`)
+- DB: 격리된 `g7_powercache_install`
+- 후보 소스 커밋: `67fd1b68`
+- 롤백 압축파일: `0.3.0-alpha.2`, SHA-256 `290080fe88394ad10398f0d29c9df44d4ed45f78e45aa80707db20d3fa4bd02b`
+- 업데이트 압축파일: `0.3.0-alpha.3`, SHA-256 `3fc601a31ac5e69cfad87f5ea4a3d2c19007980235cb6c4dc75db4e9c05193bb`
 
-## Backup and restore drill
+## 백업·복구 연습
 
-The drill required `APP_ENV=local`, an exact expected database name, explicit destructive authorization, `bypass` mode, and maintenance mode. It backed up the raw settings file plus all rows from the two JW PowerCache tables, wrote a private temporary backup, inserted a corrupt site identity/runtime epoch/pending outbox event, changed a setting, restored the backup, and ran `power-cache:restore-finalize --yes`.
+실행에는 `APP_ENV=local`, 정확한 예상 DB 이름, 데이터 변조에 대한 명시적 승인, `bypass`와 유지보수 모드가 필요했다. 원본 설정 파일과 PowerCache 테이블 2개의 전체 행을 비공개 임시 파일로 백업했다. 이후 잘못된 사이트 ID·실행 세대·미적용 아웃박스 이벤트를 넣고 설정을 변경한 다음, 백업을 복원하고 `power-cache:restore-finalize --yes`를 실행했다.
 
-| Check | Result |
+| 검사 | 결과 |
 |---|:---:|
-| Backup SHA-256 `9a973754e6b745bf6c994c9c228d2e29224741cca79544d71e6dce3ee9909dfa` read back | PASS |
-| Settings SHA-256 `7b1066d8ed0772b5a47e3e2d83644b42fce44db5cfe699e6c1301dd0636352f6` restored exactly | PASS |
-| Site ID `c4f92732-5a34-4c26-bbcb-7cd33dee48d2` preserved | PASS |
-| Three state rows and 66 outbox rows restored | PASS |
-| Runtime epoch rotated from `5b65cec0-7bd7-416c-a896-68f71ae48a57` to `d2054deb-6d28-4b1c-acfa-620a082db09b` | PASS |
-| Dirty event and pending outbox returned to zero | PASS |
-| Emergency barrier clean and runtime snapshot current | PASS |
-| Redis response carrying the pre-restore epoch rejected by epoch mismatch | PASS |
-| Post-restore doctor warnings/errors | `0 / 0` |
+| 백업 SHA-256 `9a973754e6b745bf6c994c9c228d2e29224741cca79544d71e6dce3ee9909dfa` 재조회 | 통과 |
+| 설정 SHA-256 `7b1066d8ed0772b5a47e3e2d83644b42fce44db5cfe699e6c1301dd0636352f6` 정확히 복원 | 통과 |
+| 사이트 ID `c4f92732-5a34-4c26-bbcb-7cd33dee48d2` 보존 | 통과 |
+| 상태 행 3개, 아웃박스 행 66개 복원 | 통과 |
+| 실행 세대 `5b65cec0-7bd7-416c-a896-68f71ae48a57` → `d2054deb-6d28-4b1c-acfa-620a082db09b` 회전 | 통과 |
+| 미복구 이벤트·미적용 아웃박스 0으로 복귀 | 통과 |
+| 비상 장벽 정상화·실행 상태 스냅샷 최신화 | 통과 |
+| 복구 전 실행 세대를 가진 Redis 응답을 세대 불일치로 거부 | 통과 |
+| 복구 후 진단 경고·오류 | `0 / 0` |
 
-The command also failed closed as designed: without `--yes` it exited 2 without mutation, and while the site was online it exited 1 with a maintenance-mode error.
+안전 조건이 없으면 작업을 차단하는 동작도 확인했다. `--yes`가 없으면 변경 없이 종료 코드 2를 반환했고, 사이트가 온라인 상태이면 유지보수 모드 오류와 함께 종료 코드 1을 반환했다.
 
-## Release rollback cycle
+## 릴리스 롤백 순환
 
-The active installed plugin was forced from the current alpha.3 candidate to the exact alpha.2 archive and then upgraded back to the current alpha.3 archive. The active installation path returned to `0.3.0-alpha.3`; the restored settings checksum and site ID remained unchanged, mode/store remained `bypass`/Redis, pending outbox remained zero, and doctor/status reported no warning or error. The new `power-cache:restore-finalize` command was absent on alpha.2 and present again after the alpha.3 upgrade, proving that the active code path actually changed.
+활성 설치본을 alpha.3 후보에서 정확한 alpha.2 압축파일로 강제 롤백한 뒤, 다시 alpha.3 압축파일로 업데이트했다. 활성 설치 경로는 `0.3.0-alpha.3`로 복귀했다. 복구된 설정 체크섬·사이트 ID는 유지됐고 모드·저장소는 `bypass`·Redis, 미적용 아웃박스는 0이었다. 진단과 상태 조회에 경고·오류는 없었다. 새 `power-cache:restore-finalize` 명령은 alpha.2에서 사라졌다가 alpha.3 업데이트 후 다시 나타나 실제 실행 코드가 바뀌었음을 확인했다.
 
-G7 keeps the original `_bundled` source separately from the active `plugins/jw-power_cache` installation. Version assertions used the active path and plugin database record rather than assuming the bundled source was live.
+G7은 원본 `_bundled` 소스와 활성 `plugins/jw-power_cache` 설치본을 별도로 보관한다. 따라서 번들 소스가 실행 중이라고 가정하지 않고 활성 경로와 플러그인 DB 레코드로 버전을 검증했다.
 
-## Operational boundary
+## 운영 경계
 
-The procedure deliberately does not restore Redis. Cache responses are disposable; restoring an old Redis snapshot alongside an old DB epoch would create avoidable stale-data risk. Operators must restore the database, settings, and plugin artifact under maintenance mode, run `restore-finalize`, pass doctor, and only then reopen traffic.
+이 절차는 의도적으로 Redis를 복구하지 않는다. 캐시 응답은 다시 만들 수 있으며, 오래된 DB 실행 세대와 Redis 스냅샷을 함께 복구하면 불필요한 오래된 응답 위험이 생긴다. 운영자는 유지보수 모드에서 DB·설정·플러그인 배포 파일을 복원하고 `restore-finalize`와 진단을 통과한 뒤에만 트래픽을 다시 열어야 한다.

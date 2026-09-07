@@ -1,4 +1,4 @@
-# Loading UX G7 runtime compatibility
+# 로딩 화면 개선 기능의 G7 실행 환경 호환성
 
 ## 결론
 
@@ -36,4 +36,4 @@ git grep 'G7Core.registerComponents' 7.0.9 -- resources/js
 - 전환 오버레이 설정은 변경하지 않으므로 G7이 target, fallback, wait 조건과 제거 시점을 계속 관리합니다.
 - 타사 템플릿의 내부 스피너는 명시적 프로필이 없으면 유지합니다.
 - G7이 전환 오버레이 DOM ID를 변경하는 후속 버전에서는 원본 스피너가 남도록 fail-safe하고 호환성 프로필을 갱신해야 합니다.
-- `0.4.0-beta.1` 승격 여부는 실제 G7 설치 통합과 PowerCache 전체 transaction seam 릴리스 게이트 통과 후 결정합니다.
+- `0.4.0-beta.1` 승격 여부는 실제 G7 설치 통합과 PowerCache 전체 트랜잭션 훅 릴리스 검증 조건 통과 후 결정합니다.

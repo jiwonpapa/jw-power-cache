@@ -1,44 +1,44 @@
-# Upgrade and rollback verification — 2026-09-01
+# 업데이트·롤백 검증 — 2026-09-01
 
-## Verdict
+## 판정
 
-The isolated Redis-backed G7 instance passed a forced `0.3.0-alpha.2 → 0.3.0-alpha.1 → 0.3.0-alpha.3` rollback and upgrade rehearsal. Plugin settings, site identity, database state, and application data were preserved. The final candidate passed doctor, deactivate/reactivate epoch rotation, and an Apache/PHP-FPM MISS-to-HIT smoke test with identical response bodies.
+Redis를 사용하는 격리 G7 환경에서 `0.3.0-alpha.2 → 0.3.0-alpha.1 → 0.3.0-alpha.3` 강제 롤백·업데이트 연습을 통과했다. 플러그인 설정·사이트 ID·DB 상태·애플리케이션 데이터가 보존됐다. 최종 후보는 진단, 비활성화·재활성화 시 실행 세대 회전, Apache/PHP-FPM의 MISS→HIT 기본 동작 검사를 통과했고 응답 본문도 일치했다.
 
-This verifies the release process on the G7 transaction-seam candidate. It must be repeated against the final tagged G7 7.0.10 release before JW PowerCache 1.0.
+G7 트랜잭션 내부 훅 후보의 당시 릴리스 절차를 검증한 기록이다. JW PowerCache 1.0 전에 최종 태그가 지정된 G7 7.0.10 릴리스에서 다시 검사해야 한다.
 
-## Environment and artifacts
+## 당시 환경과 검증 파일
 
-- Core: Gnuboard 7 transaction-seam commit `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
-- Database: MySQL 8.4.11 in an isolated local container
-- Cache: Redis 7.4.11, `noeviction`
-- Web path: Apache 2.4.67 to PHP-FPM 8.5.3
-- Rollback archive: `jw-power_cache-0.3.0-alpha.1.zip`, SHA-256 `f4de0a07628aa4e83a11f14b6764ad231a707c130ab6d62a45e9560e9b33a6ec`
-- Upgrade archive: dry-run candidate from commit `365a5bc1`, SHA-256 `28eb24a96deec128d0d5d2b32aa417d93a6ac57f0ad5cf293a6db974f4b40db4`
+- 코어: 그누보드7 트랜잭션 내부 훅 커밋 `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
+- DB: 격리된 로컬 컨테이너의 MySQL 8.4.11
+- 캐시: Redis 7.4.11, `noeviction`
+- 웹 경로: Apache 2.4.67 → PHP-FPM 8.5.3
+- 롤백 압축파일: `jw-power_cache-0.3.0-alpha.1.zip`, SHA-256 `f4de0a07628aa4e83a11f14b6764ad231a707c130ab6d62a45e9560e9b33a6ec`
+- 업데이트 압축파일: 커밋 `365a5bc1`의 모의 빌드 후보, SHA-256 `28eb24a96deec128d0d5d2b32aa417d93a6ac57f0ad5cf293a6db974f4b40db4`
 
-## Preservation checks
+## 보존 검사
 
-| Check | Before | After final upgrade | Result |
+| 검사 | 이전 | 최종 업데이트 후 | 결과 |
 |---|---|---|:---:|
-| Plugin version | `0.3.0-alpha.2` | `0.3.0-alpha.3` | PASS |
-| Plugin status | active | active | PASS |
-| Mode/store driver | bypass/Redis | bypass/Redis | PASS |
-| Settings SHA-256 | `7b1066d8ed0772b5a47e3e2d83644b42fce44db5cfe699e6c1301dd0636352f6` | same | PASS |
-| Site ID | `c4f92732-5a34-4c26-bbcb-7cd33dee48d2` | same | PASS |
-| State rows | 3 | 3 | PASS |
-| Pending outbox | 0 | 0 | PASS |
-| Doctor warnings/errors | 0/0 | 0/0 | PASS |
+| 플러그인 버전 | `0.3.0-alpha.2` | `0.3.0-alpha.3` | 통과 |
+| 플러그인 상태 | 활성 | 활성 | 통과 |
+| 모드·저장소 | bypass/Redis | bypass/Redis | 통과 |
+| 설정 SHA-256 | `7b1066d8ed0772b5a47e3e2d83644b42fce44db5cfe699e6c1301dd0636352f6` | 동일 | 통과 |
+| 사이트 ID | `c4f92732-5a34-4c26-bbcb-7cd33dee48d2` | 동일 | 통과 |
+| 상태 행 수 | 3 | 3 | 통과 |
+| 미적용 아웃박스 | 0 | 0 | 통과 |
+| 진단 경고·오류 | 0/0 | 0/0 | 통과 |
 
-The final archive contained only runtime and product-documentation paths. Test, CI, tool, dist, vendor, environment, and Git metadata paths were absent. Updating from the older archive also removed its non-runtime test, tool, and CI directories from the installed plugin tree.
+당시 최종 압축파일에는 실행 코드와 제품 문서 경로만 포함됐다. 테스트·CI·도구·dist·vendor·환경파일·Git 메타데이터는 없었다. 이전 압축파일에서 업데이트하면서 설치 트리의 실행에 불필요한 테스트·도구·CI 폴더도 제거됐다.
 
-## Lifecycle and cache smoke
+## 수명주기·캐시 기본 동작
 
-- Rollback to alpha.1 completed while the cache mode was BYPASS; doctor remained healthy and the site ID was unchanged.
-- Upgrade from alpha.1 to alpha.3 completed with settings and tables intact.
-- Deactivation rotated the runtime epoch from `adca2d96-7cdf-4b93-bf00-bbf5cb730491` to `c36d2904-a27b-4b56-b441-08fcf542f8fa`.
-- Reactivation rotated it again to `0018c02f-deba-4cf9-b014-87000ae780a6`.
-- In ACTIVE mode after a scoped page purge, the first request returned `MISS-STORED` and the second returned `HIT`; both were HTTP 200 and had SHA-256 `49dff322766f812798123e9bfc01684c36d1076bcea0db5fc683ba548a5f5759`.
-- The instance was restored to BYPASS with dirty event zero, pending outbox zero, and emergency dirty false.
+- BYPASS 모드에서 alpha.1 롤백을 완료했다. 진단은 정상이고 사이트 ID는 유지됐다.
+- alpha.1에서 alpha.3으로 업데이트한 뒤 설정과 테이블이 유지됐다.
+- 비활성화 시 실행 세대가 `adca2d96-7cdf-4b93-bf00-bbf5cb730491`에서 `c36d2904-a27b-4b56-b441-08fcf542f8fa`로 회전했다.
+- 재활성화 시 다시 `0018c02f-deba-4cf9-b014-87000ae780a6`로 회전했다.
+- ACTIVE 모드에서 페이지 범위 무효화 후 첫 요청은 `MISS-STORED`, 다음 요청은 `HIT`를 반환했다. 둘 다 HTTP 200이고 SHA-256은 `49dff322766f812798123e9bfc01684c36d1076bcea0db5fc683ba548a5f5759`로 같았다.
+- 마지막에는 BYPASS로 복원했으며 미복구 이벤트·미적용 아웃박스는 0, 비상 미복구 상태는 false였다.
 
-## Release boundary
+## 배포 근거 범위
 
-No release tag or GitHub release was created. A publishable artifact is intentionally blocked until an exact `v0.3.0-alpha.3` tag points to a clean release commit; CI uses the explicit dry-run verification mode.
+태그나 GitHub 릴리스를 만들지 않았다. 당시 배포 파일 생성은 정확한 `v0.3.0-alpha.3` 태그가 변경사항 없는 릴리스 커밋을 가리킬 때만 허용했다. CI는 명시적인 모의 검증 모드를 사용했다.

@@ -12,12 +12,14 @@ G7의 **플러그인 관리 → 업데이트 확인**은 GitHub `/releases/lates
 
 ## 배포 순서
 
+릴리스 설명과 사용자 안내는 한국어로 작성합니다. 이미 발행한 버전의 번역·오탈자 수정은 설명만 갱신하고, 태그와 배포 파일은 교체하지 않습니다.
+
 1. 버전·CHANGELOG·`docs/releases/v<version>.md`를 갱신하고 테스트합니다.
-2. 커밋을 `main`에 푸시하고 Quality의 PHP·Redis·SQLite·MySQL·MariaDB 검사를 모두 통과시킵니다.
+2. 커밋을 `main`에 푸시하고 품질 검사(Quality)의 PHP·Redis·SQLite·MySQL·MariaDB 검사를 모두 통과시킵니다.
 3. 검증한 커밋에 `v<version>` 태그를 생성해 푸시합니다.
-4. Release 워크플로가 테스트·ZIP·체크섬·provenance 생성 후 일반 릴리스를 Latest로 게시합니다. 게시 뒤 G7과 동일한 `/releases/latest` 조회로 태그 일치까지 검사합니다.
+4. 배포(Release) 워크플로가 테스트·ZIP·체크섬·빌드 출처 증명 생성 후 일반 릴리스를 Latest로 게시합니다. 게시 뒤 G7과 동일한 `/releases/latest` 조회로 태그 일치까지 검사합니다.
 5. 서버의 업데이트 확인에서 `current_version < latest_version`, `update_available=true`, `is_compatible=true`를 확인합니다.
 6. 설정과 복구용 백업을 보존하고 문서화된 캐시 유지보수 절차로 G7 자체 업데이트를 실행합니다. 플러그인 파일만 수동 덮어쓰지 않습니다.
-7. 설치 DB·manifest 버전 일치, 설정 유지, doctor, API MISS→HIT를 확인합니다. 업데이트 후 동일 버전에 대해 `update_available=false`가 정상입니다.
+7. 설치 DB·플러그인 정의 파일 버전 일치, 설정 유지, doctor, API MISS→HIT를 확인합니다. 업데이트 후 동일 버전에 대해 `update_available=false`가 정상입니다.
 
 하이픈이 있는 사전 릴리스는 계속 `prerelease`로 게시하며 G7의 일반 업데이트 목록에는 노출하지 않습니다. 베타 접미사 제거는 기존 정합성 보증이나 지원 범위를 확대하지 않습니다.

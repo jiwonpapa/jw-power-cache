@@ -1,8 +1,10 @@
 <p align="center">
-  <img src="docs/assets/intro-concepts-20260902/03-blush-browser.webp" alt="JW PowerCache - Gnuboard 7 response caching with the JW SOFT logo" width="100%">
+  <img src="docs/assets/intro-concepts-20260902/03-blush-browser.webp" alt="JW PowerCache — JW SOFT 로고와 그누보드7 응답 캐시 소개" width="100%">
 </p>
 
 # JW PowerCache
+
+문서와 사용자 안내는 한국어로 제공합니다. 코드·명령어·설정 키는 그대로 표기하며, [MIT 라이선스 한국어 안내](LICENSE.ko.md)와 [측정 원본 안내](docs/benchmark/evidence/README.md)를 별도로 제공합니다.
 
 **Gnuboard 7 공개 API를 더 빠르게 제공하는 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
 
@@ -13,7 +15,7 @@
 - 방문자가 반복 조회하는 공개 JSON API와 로그인 사용자의 게시판 목록 응답속도 개선
 - 페이지·상품·게시글 변경 시 TTL 대기 없이 관련 캐시 즉시 무효화
 - 로그인 게시판 목록은 사용자별 키로 격리하고 매 요청 읽기 권한 재검사
-- 캐시 장애 시 사이트 오류를 만들지 않고 원본 응답으로 fail-open
+- 캐시 장애 시 사이트 오류를 만들지 않고 원본 응답으로 우회
 - 별도 저장소를 만들지 않고 **G7 관리자가 선택한 표준 캐시 저장소** 사용
 
 ## 빠른 설치
@@ -45,10 +47,10 @@
 | 공개 페이지 상세 | `api.modules.sirsoft-page.pages.show` |
 | 쇼핑몰 공개 카테고리 | `categories.index`, `categories.show` |
 | 공개 게시판 목록 | 공개·로그인 사용자 모두 1~3페이지, `per_page` 최대 50 |
-| 로그인 게시판 목록 | 사용자 ID별 응답 격리, read 권한 매 요청 재검사 |
+| 로그인 게시판 목록 | 사용자 ID별 응답 격리, 읽기 권한 매 요청 재검사 |
 | 페이지·카테고리 인증 요청 | BYPASS |
 | 일반 브라우저 세션·XSRF | 게시판 안전 GET에서 허용 |
-| 미등록 cookie·query·route middleware | BYPASS |
+| 미등록 쿠키·쿼리·경로 미들웨어 | BYPASS |
 | 본문 또는 업로드 입력이 있는 GET/HEAD | BYPASS |
 | 게시글 상세·상품·검색·장바구니·주문 | 현재 캐시하지 않음 |
 | 응답 형식 | 200 JSON, 크기 상한 이내 |
@@ -62,16 +64,16 @@
 
 ## 정합성 모델
 
-1. 공식 G7 동기식 변경 훅에서 outbox와 `dirty_event_id`를 기록합니다. 훅이 원본 트랜잭션 안에서 실행되는 경로는 함께 커밋·롤백되고, 커밋 뒤 실행되는 경로는 내구성 있는 후속 outbox로 처리됩니다.
-2. outbox ID를 세대 값으로 적용하고, 미적용 outbox가 하나라도 있으면 복구 전까지 모든 HIT를 금지합니다.
-3. 정상 HIT는 G7 관리자가 선택한 표준 캐시 저장소의 clean runtime snapshot, 비상 장벽, 현재 세대 벡터를 모두 통과해야 합니다. DB state는 snapshot 최초 생성·dirty 복구·운영 진단 때만 읽습니다.
-4. 캐시 저장소 오류가 나면 원본 컨트롤러로 fail-open하고 캐시 때문에 5xx를 만들지 않습니다.
+1. 공식 G7 동기식 변경 훅에서 아웃박스와 `dirty_event_id`를 기록합니다. 훅이 원본 트랜잭션 안에서 실행되는 경로는 함께 커밋·롤백되고, 커밋 뒤 실행되는 경로는 내구성 있는 후속 아웃박스로 처리됩니다.
+2. 아웃박스 ID를 세대 값으로 적용하고, 미적용 아웃박스가 하나라도 있으면 복구 전까지 모든 HIT를 금지합니다.
+3. 정상 HIT는 G7 관리자가 선택한 표준 캐시 저장소의 정상 실행 상태 스냅샷, 비상 장벽, 현재 세대 벡터를 모두 통과해야 합니다. DB 상태는 스냅샷 최초 생성·미복구 상태 복구·운영 진단 때만 읽습니다.
+4. 캐시 저장소 오류가 나면 원본 컨트롤러로 우회하고 캐시 때문에 5xx를 만들지 않습니다.
 
-변경 감지 시 표준 캐시 저장소의 비상 장벽을 세우고, 세대 적용·outbox 완료·clean snapshot 반영이 모두 끝난 뒤 장벽을 내립니다. 평상시 HIT는 파워캐시 자체 DB 질의를 만들지 않습니다. 트랜잭션 내부 훅의 정상 rollback은 해당 이벤트 토큰만 해제하며, 더 최신 이벤트의 장벽은 해제할 수 없습니다.
+변경 감지 시 표준 캐시 저장소의 비상 장벽을 세우고, 세대 적용·아웃박스 완료·정상 스냅샷 반영이 모두 끝난 뒤 장벽을 내립니다. 평상시 HIT는 파워캐시 자체 DB 질의를 만들지 않습니다. 트랜잭션 내부 훅의 정상 롤백은 해당 이벤트 토큰만 해제하며, 더 최신 이벤트의 장벽은 해제할 수 없습니다.
 
-Redis eviction이나 운영 실수로 barrier, snapshot, generation 키 하나만 사라져도 값 `0`으로 간주하지 않습니다. 모든 HIT를 막고 DB의 runtime epoch를 회전한 뒤 알려진 전체 generation 제어면을 재구축하므로, 물리적으로 남은 과거 응답은 새 키 공간에서 도달할 수 없습니다.
+Redis 키 축출이나 운영 실수로 장벽, 스냅샷, 세대 키 하나만 사라져도 값 `0`으로 간주하지 않습니다. 모든 HIT를 막고 DB의 실행 세대를 회전한 뒤 알려진 전체 세대 제어면을 재구축하므로, 물리적으로 남은 과거 응답은 새 키 공간에서 도달할 수 없습니다.
 
-공식 G7 7.0.9에는 플러그인 훅을 서비스 트랜잭션 안으로 강제하는 별도 capability가 없습니다. 따라서 doctor는 이를 오류가 아닌 보증 수준 경고로 표시합니다. 표준 동기 훅만으로 active 사용이 가능하지만, 프로세스가 원본 커밋 직후 훅 호출 전에 비정상 종료되는 매우 짧은 구간은 원자적으로 차단하지 못합니다. 직접 SQL·importer처럼 공식 훅을 우회하는 변경도 자동 감지하지 못합니다. 일반 릴리스 전환은 이러한 지원 범위와 정합성 보증을 확대하지 않습니다.
+공식 G7 7.0.9에는 플러그인 훅을 서비스 트랜잭션 안으로 강제하는 별도 기능이 없습니다. 따라서 doctor는 이를 오류가 아닌 보증 수준 경고로 표시합니다. 표준 동기 훅만으로 active 사용이 가능하지만, 프로세스가 원본 커밋 직후 훅 호출 전에 비정상 종료되는 매우 짧은 구간은 원자적으로 차단하지 못합니다. 직접 SQL·가져오기 도구처럼 공식 훅을 우회하는 변경도 자동 감지하지 못합니다. 일반 릴리스 전환은 이러한 지원 범위와 정합성 보증을 확대하지 않습니다.
 
 사이트 전역 설정과 모듈·플러그인·템플릿·언어팩 생명주기는 아직 일반 after 훅 경계입니다. 이 관리 작업은 `bypass` 전환 → 작업 수행 → `purge --scope=site` → doctor → `active` 순서의 유지보수 절차를 적용해야 합니다.
 
@@ -120,19 +122,19 @@ php artisan power-cache:gc --days=7
 php artisan power-cache:restore-finalize --yes
 ```
 
-- `doctor`: G7 관리자가 선택한 표준 저장소 read/write, DB state/outbox, route·middleware 계약을 검사합니다.
-- `status`: 현재 모드와 dirty/outbox 상태를 조회합니다.
+- `doctor`: G7 관리자가 선택한 표준 저장소 읽기·쓰기, DB 상태·아웃박스, 경로·미들웨어 계약을 검사합니다.
+- `status`: 현재 모드와 미복구·아웃박스 상태를 조회합니다.
 - `mode`: `bypass`(OFF), `observe`(저장 없이 판정), `active`(ON)를 전환합니다. `active`는 doctor가 실패하면 전환 자체를 차단합니다.
-- `purge`: key 삭제 없이 `site`, `page:all`, `category:tree`, `board:all` 세대를 회전합니다.
-- `reconcile`: 중복·역순 실행에도 안전하게 미적용 outbox를 재생합니다.
-- `gc`: 적용 완료된 오래된 outbox 감사 이력을 정리합니다. 캐시 물리 엔트리 수명은 G7 표준 저장소가 담당합니다.
-- `restore-finalize`: 유지보수 모드와 `bypass`에서만 실행되며, 복구된 outbox를 정리한 뒤 runtime epoch를 회전하고 전체 제어면을 재구축합니다. `--yes`가 없거나 사이트가 온라인이면 변경하지 않습니다.
+- `purge`: 키 삭제 없이 `site`, `page:all`, `category:tree`, `board:all` 세대를 회전합니다.
+- `reconcile`: 중복·역순 실행에도 안전하게 미적용 아웃박스를 재생합니다.
+- `gc`: 적용 완료된 오래된 아웃박스 감사 이력을 정리합니다. 캐시 물리 엔트리 수명은 G7 표준 저장소가 담당합니다.
+- `restore-finalize`: 유지보수 모드와 `bypass`에서만 실행되며, 복구된 아웃박스를 정리한 뒤 실행 세대를 회전하고 전체 제어면을 재구축합니다. `--yes`가 없거나 사이트가 온라인이면 변경하지 않습니다.
 
-더미 생성기, importer, seed, 외부 SQL처럼 공식 Service 훅을 우회하는 변경 뒤에는 반드시 해당 scope purge를 실행해야 합니다. 변경 범위를 모르면 `--scope=site`를 사용하십시오.
+더미 생성기, 가져오기 도구, 초기 데이터 입력, 외부 SQL처럼 공식 서비스 훅을 우회하는 변경 뒤에는 반드시 해당 범위의 캐시를 무효화해야 합니다. 변경 범위를 모르면 `--scope=site`를 사용하십시오.
 
-활성 플러그인은 `reconcile --limit=100`을 매분 예약해 저장소 장애 뒤 남은 outbox를 자동 재생하며, 일일 GC는 적용 완료된 감사 이력만 정리합니다. 서버의 Laravel scheduler가 실제로 실행 중이어야 합니다.
+활성 플러그인은 `reconcile --limit=100`을 매분 예약해 저장소 장애 뒤 남은 아웃박스를 자동 재생하며, 일일 GC는 적용 완료된 감사 이력만 정리합니다. 서버의 Laravel 스케줄러가 실제로 실행 중이어야 합니다.
 
-예약·수동 복구는 재생 시작 시 확인한 outbox 장벽 토큰만 해제합니다. 처리 도중 시작된 더 최신 갱신이나 별도의 제어면 재구축 장벽은 해제하지 않습니다. 이전 버전에서 outbox 처리는 완료됐지만 장벽만 남은 상태도 다음 복구 실행에서 해제합니다.
+예약·수동 복구는 재생 시작 시 확인한 아웃박스 장벽 토큰만 해제합니다. 처리 도중 시작된 더 최신 갱신이나 별도의 제어면 재구축 장벽은 해제하지 않습니다. 이전 버전에서 아웃박스 처리는 완료됐지만 장벽만 남은 상태도 다음 복구 실행에서 해제합니다.
 
 ## 백업 복구 순서
 
@@ -141,13 +143,13 @@ php artisan power-cache:restore-finalize --yes
 ```bash
 php artisan power-cache:mode bypass
 php artisan down --retry=60
-# queue worker를 멈춘 뒤 DB, 설정 파일, 플러그인 코드를 복구
+# 큐 작업자를 멈춘 뒤 DB, 설정 파일, 플러그인 코드를 복구
 php artisan power-cache:restore-finalize --yes
 php artisan power-cache:doctor
 php artisan up
 ```
 
-`restore-finalize`가 실패하면 유지보수 모드를 해제하지 마십시오. 비상 dirty 장벽, 미적용 outbox, Redis 연결을 먼저 확인해야 합니다. 격리 환경 연습 도구는 정확한 DB 이름과 명시적 파괴 허용값을 모두 요구합니다.
+`restore-finalize`가 실패하면 유지보수 모드를 해제하지 마십시오. 비상 미복구 장벽, 미적용 아웃박스, Redis 연결을 먼저 확인해야 합니다. 격리 환경 연습 도구는 정확한 DB 이름과 명시적 파괴 허용값을 모두 요구합니다.
 
 ```bash
 G7_ROOT=/path/to/isolated-g7 \
@@ -156,38 +158,38 @@ JWPC_RESTORE_DRILL_EXPECT_DATABASE=isolated_database \
 php tool/run-backup-restore-drill.php
 ```
 
-## 보안 불변식
+## 반드시 유지하는 보안 조건
 
 다음 항목은 관리자 설정으로 완화할 수 없습니다.
 
-- GET/HEAD 및 정확한 route allowlist만 허용
+- GET/HEAD 및 정확한 경로 허용목록만 허용
 - 원문·파싱된 본문·파일 입력이 있는 GET/HEAD는 BYPASS
 - Proxy-Authorization와 주문·장바구니·미리보기·서명 토큰 헤더가 있으면 BYPASS
 - 게시판 목록의 Bearer 요청은 `optional.sanctum` 결과가 사용자면 사용자별 키, 아니면 공개 키로 격리
 - 공개 게시판 GET의 표준 세션·XSRF만 허용하며 알 수 없는 쿠키는 BYPASS
 - 페이지·카테고리의 인증 요청은 BYPASS
-- route 정책에 없는 query/middleware가 있으면 BYPASS
-- 게시판 목록은 공개·로그인 사용자 모두 원본과 같은 read 권한 선검증 실패 시 BYPASS
+- 경로 정책에 없는 쿼리·미들웨어가 있으면 BYPASS
+- 게시판 목록은 공개·로그인 사용자 모두 원본과 같은 읽기 권한 선검증 실패 시 BYPASS
 - 게시판 목록은 1~3페이지·`per_page` 최대 50만 허용하고 PC/모바일 키를 분리
-- 같은 route에 다른 before_core/after_core 확장 미들웨어가 겹치면 BYPASS
-- 공개 응답을 변형하는 origin filter hook이 등록되어 있으면 BYPASS
+- 같은 경로에 다른 before_core/after_core 확장 미들웨어가 겹치면 BYPASS
+- 공개 응답을 변형하는 원본 응답 필터 훅이 등록되어 있으면 BYPASS
 - 저장 전후 세대가 다르면 미저장
 - HEAD MISS는 원본만 호출하고 캐시를 생성하지 않음
 - Set-Cookie/no-store/인증·다운로드·redirect 응답은 미저장
-- 세대 확인이나 복구 장벽 확인이 실패하면 stale 응답 제공 금지
+- 세대 확인이나 복구 장벽 확인이 실패하면 오래된 응답 제공 금지
 - 일반 HIT·락 획득 후 HIT·락 대기 후 HIT 모두 응답 읽기 뒤 장벽 토큰·site/epoch·세대를 재확인
 
-기본 Laravel JSON 응답의 `private, no-cache`는 브라우저 캐시 정책으로 보존하되, 서버 내부 origin cache 저장 자체를 막지는 않습니다. `no-store`만 절대 저장 금지입니다.
+기본 Laravel JSON 응답의 `private, no-cache`는 브라우저 캐시 정책으로 보존하되, 서버 내부 원본 응답 캐시 저장 자체를 막지는 않습니다. `no-store`만 절대 저장 금지입니다.
 
 ## 알려진 제한
 
-- 현재 실제 HIT 지원은 페이지 상세, 카테고리 API, 공개 게시판 hot-list입니다.
-- 캐시 HIT는 extension `api, after_core` 지점에서 반환됩니다. `optional.sanctum`과 throttle은 HIT 전에도 실행되며, 게시판 route permission은 뒤쪽에 있어 플러그인이 동일 권한을 먼저 검사합니다. 이 순서를 doctor의 정확한 middleware 계약으로 고정합니다.
-- `after_core` 앞에서 실행되는 코어 API 미들웨어와 rate-limit 비용은 남습니다. 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 공개 역할 또는 로그인 사용자 권한을 요청당 확인합니다. 전체 HTTP 요청을 0-query로 만들려면 인증·권한·IDV·rate-limit 뒤/컨트롤러 앞의 공식 코어 seam 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
+- 현재 실제 HIT 지원은 페이지 상세, 카테고리 API, 공개 게시판 상위 목록입니다.
+- 캐시 HIT는 확장 `api, after_core` 지점에서 반환됩니다. `optional.sanctum`과 요청 빈도 제한은 HIT 전에도 실행되며, 게시판 경로 권한은 뒤쪽에 있어 플러그인이 동일 권한을 먼저 검사합니다. 이 순서를 doctor의 정확한 미들웨어 계약으로 고정합니다.
+- `after_core` 앞에서 실행되는 코어 API 미들웨어와 요청 빈도 제한 비용은 남습니다. 페이지·카테고리 HIT는 플러그인 DB를 읽지 않지만, 게시판은 공개 역할 또는 로그인 사용자 권한을 요청당 확인합니다. 전체 HTTP 요청의 DB 조회를 0건으로 만들려면 인증·권한·IDV·요청 빈도 제한 뒤/컨트롤러 앞의 공식 코어 연동 지점 또는 PHP 부팅 전 서버 어댑터가 필요합니다.
 - 직접 SQL 변경을 자동 감지할 수 없습니다.
 - 공식 G7 7.0.9의 커밋 후 훅에는 앞서 설명한 짧은 비원자 구간이 남습니다.
-- 사이트 전역 설정·확장 생명주기는 아직 동일 트랜잭션 seam 대상이 아니므로 유지보수 중 bypass와 완료 후 site purge가 필요합니다.
-- 다중 노드에서 G7 관리자가 file 저장소를 선택한 구성은 지원하지 않습니다.
+- 사이트 전역 설정·확장 생명주기는 아직 동일 트랜잭션 훅 대상이 아니므로 유지보수 중 캐시 우회와 완료 후 사이트 범위 무효화가 필요합니다.
+- 다중 노드에서 G7 관리자가 파일 저장소를 선택한 구성은 지원하지 않습니다.
 - 전체 페이지 HTML, 바이너리, 검색 결과와 게시판 목록 외 사용자별 응답은 지원하지 않습니다.
 - PHP/Laravel 부팅 전 캐시는 별도 서버 어댑터 범위입니다.
 - Loading UX는 알 수 없는 타사 템플릿에서 전환 오버레이만 교체하며 내부 스피너는 건드리지 않습니다.
@@ -195,7 +197,7 @@ php tool/run-backup-restore-drill.php
 
 ## 검증
 
-Gnuboard 7 루트를 지정해 독립 테스트를 실행합니다.
+그누보드7 루트를 지정해 독립 테스트를 실행합니다.
 
 ```bash
 G7_ROOT=/path/to/gnuboard7 \
@@ -203,15 +205,15 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 공식 G7 7.0.9·PHP 8.5.3·SQLite·Redis 7.4 로컬 회귀 테스트는 **104 tests / 617 assertions / 2 capability skips**입니다. 제외된 2개는 공식 G7에 없는 동일 트랜잭션 훅 capability 검사입니다. 공개·로그인 사용자 키 격리, GET 본문 우회, 사용자 시간대 분리, 게시판 read 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 outbox commit/rollback, 예약 복구와 동시 갱신, 정책 업그레이드, 릴리스 버전 일치, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 공식 G7 7.0.9·PHP 8.5.3·SQLite·Redis 7.4 로컬 회귀 테스트는 **테스트 104개 / 검증문 617개 / 미지원 기능 검사 2개 제외**입니다. 제외된 2개는 공식 G7에 없는 동일 트랜잭션 훅 기능 검사입니다. 공개·로그인 사용자 키 격리, GET 본문 우회, 사용자 시간대 분리, 게시판 읽기 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB 임대 잠금, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 아웃박스 커밋·롤백, 예약 복구와 동시 갱신, 정책 업그레이드, 릴리스 버전 일치, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 공개 HTTPS에서 수행한 최신 5VU 비교 결과는 [g7devops.com 실서버 벤치마크](docs/benchmark/g7devops-live-5vu-2026-09-01.md)에 기록되어 있습니다. 4개 주요 API, 총 2,880건에서 오류·응답 불일치 없이 경로별 p95가 49.0~68.9% 개선됐습니다.
 
 이전 실서버 ON/OFF 결과는 [온라인 ON/OFF 실측 보고서](docs/benchmark/jw-power-cache-live-ab-report-2026-08-23.md)에 기록되어 있습니다.
 
-Redis 로컬 재현 환경의 3회 중앙값 게시판 성능 결과는 [로컬 Beta 성능 보고서](docs/benchmark/local-beta-performance-2026-09-01.md)에 기록되어 있습니다. 15분 FPM 내구성·장애 주입 결과는 [장애 캠페인 보고서](docs/benchmark/local-fpm-fault-campaign-2026-09-01.md)에 기록되어 있습니다.
+Redis 로컬 재현 환경의 3회 중앙값 게시판 성능 결과는 [로컬 베타 성능 보고서](docs/benchmark/local-beta-performance-2026-09-01.md)에 기록되어 있습니다. 15분 FPM 내구성·장애 주입 결과는 [장애 캠페인 보고서](docs/benchmark/local-fpm-fault-campaign-2026-09-01.md)에 기록되어 있습니다.
 
-과거 transaction-seam 후보에서 수행한 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다. 현재 공식 7.0.9 및 표준 저장소 기준 검증 범위는 [0.4.0 릴리스 노트](docs/releases/v0.4.0.md)를 확인하십시오.
+과거 트랜잭션 내부 훅 후보에서 수행한 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다. 현재 공식 7.0.9 및 표준 저장소 기준 검증 범위는 [0.4.0 릴리스 노트](docs/releases/v0.4.0.md)를 확인하십시오.
 
 관리자 설정 실브라우저 결과는 [관리자 설정 검증 보고서](docs/verification/admin-settings-browser-2026-09-01.md), 실제 백업 복구와 릴리스 롤백 결과는 [복구·롤백 검증 보고서](docs/verification/backup-restore-release-rollback-2026-09-01.md)에 기록되어 있습니다.
 

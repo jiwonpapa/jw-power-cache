@@ -1,27 +1,30 @@
-# Release checklist
+# 릴리스 점검표
 
-The current alpha verification snapshot is recorded in [clean lifecycle evidence](verification/clean-lifecycle-2026-09-01.md). Check a box only for the exact release commit and artifact being published; prior alpha evidence is supporting evidence, not a substitute.
+과거 알파 버전의 검증 결과는 [클린 설치·수명주기 검증 기록](verification/clean-lifecycle-2026-09-01.md)에 있습니다. 실제 발행할 릴리스 커밋과 배포 파일을 검증한 항목만 체크하십시오. 과거 결과는 참고 근거이며 이번 검증을 대체하지 않습니다.
 
-## Code gate
+## 코드 검증
 
-- [ ] Manifest, changelog, and tag versions match.
-- [ ] Composer metadata, PHP syntax, Pint, and all tests pass.
-- [ ] PHP/G7/Redis CI matrix passes.
-- [ ] MySQL and MariaDB transaction matrix passes.
-- [ ] Settings defaults, backend schema, public exposure policy, and admin form contract match.
+- [ ] 플러그인·패키지·잠금 파일·변경 이력·태그 버전이 일치합니다.
+- [ ] Composer 메타데이터, PHP 문법, Pint, 전체 테스트를 통과했습니다.
+- [ ] PHP·G7·Redis CI 조합을 통과했습니다.
+- [ ] MySQL·MariaDB 트랜잭션 검증 조합을 통과했습니다.
+- [ ] 설정 기본값·서버 스키마·공개 노출 정책·관리자 폼 계약이 일치합니다.
 
-## Runtime gate
+## 실행 환경 검증
 
-- [ ] Clean install starts in `observe` mode.
-- [ ] `doctor`, MISS→HIT, scoped purge, rollback, Redis restart, and selective control-key loss pass.
-- [ ] Upgrade preserves DB state and invalidates incompatible cache entries through format/policy versioning.
-- [ ] Deactivate and rollback rotate the runtime epoch and return traffic safely to origin.
-- [ ] A real DB/settings restore followed by `restore-finalize` preserves site identity, rotates runtime epoch, rejects old cache entries, and leaves no dirty barrier or pending outbox.
+- [ ] 새로 설치하면 `observe` 모드로 시작합니다.
+- [ ] `doctor`, MISS→HIT, 범위별 무효화, 롤백, Redis 재시작, 특정 제어 키 유실 검사를 통과했습니다.
+- [ ] 업데이트가 DB 상태를 보존하고 형식·정책 버전으로 호환되지 않는 캐시를 무효화합니다.
+- [ ] 비활성화·롤백 시 실행 세대를 회전하고 안전하게 원본 응답으로 복귀합니다.
+- [ ] 실제 DB·설정 복구 후 `restore-finalize`가 사이트 ID를 보존하고 실행 세대를 회전하며, 과거 캐시를 거부하고 미복구 장벽·미적용 아웃박스를 남기지 않습니다.
 
-## Evidence and publication
+## 근거와 게시
 
-- [ ] Benchmark protocol and raw before/after evidence are attached.
-- [ ] Known limitations and compatibility changes are in release notes.
-- [ ] Release archive contains no tests, CI configuration, credentials, or local artifacts.
-- [ ] SHA-256 checksum and GitHub build-provenance attestation are published.
-- [ ] Tag commit is reachable from `main`.
+- [ ] 벤치마크 절차와 변경 전후 원본 결과를 첨부했습니다.
+- [ ] 알려진 제약과 호환성 변경을 릴리스 설명에 기록했습니다.
+- [ ] 배포 압축파일에 테스트·CI 설정·인증정보·로컬 생성물이 없습니다.
+- [ ] SHA-256 체크섬과 GitHub 빌드 출처 증명을 게시했습니다.
+- [ ] 태그 커밋이 `main` 이력에 포함되어 있습니다.
+- [ ] 사용자용 문서와 릴리스 설명을 한국어로 작성했습니다.
+- [ ] 일반 릴리스가 GitHub Latest로 지정됐으며 G7 업데이트 확인에 새 버전이 표시됩니다.
+- [ ] [업데이트 배포 규칙](releases/README.md)에 따라 설치 후 버전·설정·캐시 동작을 확인했습니다.

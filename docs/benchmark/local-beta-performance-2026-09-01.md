@@ -1,41 +1,41 @@
-# Local Beta performance evidence — 2026-09-01
+# 로컬 베타 성능 검증 — 2026-09-01
 
-## Verdict
+## 판정
 
-The designated expensive board-list route passed the short, uncapped local performance gate at concurrency 1, 4, 16, and 32. Median p95 improved by 28.8–42.4% and median throughput improved by 43.5–69.0%. All measured responses were HTTP 200, the error rate was zero, and the per-route BYPASS and ACTIVE SHA-256 body sets matched.
+지정한 고비용 게시판 목록 경로는 동시 요청 수 1·4·16·32에서 요청 빈도 제한이 없는 짧은 로컬 성능 시험을 통과했다. p95 중앙값은 28.8~42.4%, 처리량 중앙값은 43.5~69.0% 개선됐다. 모든 측정 응답은 HTTP 200, 오류율은 0이었으며, 경로별 BYPASS·ACTIVE 응답 본문의 SHA-256 집합이 일치했다.
 
-This is not the full Beta endurance gate. It used PHP's multi-worker development server and 400-request bursts, without a production PHP-FPM/Nginx path, 15–30 minute runs, resource telemetry, mutation traffic, Redis restart, or control-key fault injection during load.
+전체 베타 내구성 검증은 아니다. PHP 다중 작업자 개발 서버에서 400건 단기 요청을 사용했으며, 운영 PHP-FPM/Nginx 경로, 15~30분 실행, 자원 측정, 부하 중 데이터 변경·Redis 재시작·제어 키 장애 주입은 포함하지 않았다.
 
-## Environment
+## 당시 검증 환경
 
-- Host: Apple M4 Pro, 12 logical CPUs, macOS 26.6.1
-- Runtime: PHP 8.5.3 CLI, Laravel 12.62.0, 32 PHP development-server workers
-- Core: Gnuboard 7 transaction-seam commit `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
-- Data: 6 pages, 43 ecommerce categories, 8 boards, 268 posts, 955 comments, and 50 users
-- Database: MySQL 8.4.11 in a local container
-- Cache: Redis 7.4.11 in a local container, isolated DB 7, `noeviction`, zero evicted keys
-- Plugin mode alternated BYPASS/ACTIVE before each measurement; the runner restored BYPASS on exit
+- 호스트: Apple M4 Pro, 논리 CPU 12개, macOS 26.6.1
+- 실행 환경: PHP 8.5.3 CLI, Laravel 12.62.0, PHP 개발 서버 작업자 32개
+- 코어: 그누보드7 트랜잭션 내부 훅 커밋 `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
+- 데이터: 페이지 6개, 쇼핑몰 카테고리 43개, 게시판 8개, 게시글 268개, 댓글 955개, 사용자 50명
+- DB: 로컬 컨테이너의 MySQL 8.4.11
+- 캐시: 로컬 컨테이너의 Redis 7.4.11, 격리 DB 7, `noeviction`, 축출 키 0개
+- 매 측정 전 BYPASS·ACTIVE 모드를 번갈아 적용하고 종료 시 BYPASS로 복원
 
-## Designated board route — three-run median
+## 지정 게시판 경로 — 3회 중앙값
 
-Each mode processed 400 requests per run. The table reports the median of three alternating-order runs.
+모드별로 매회 요청 400건을 처리했다. 표는 실행 순서를 번갈아 적용한 3회의 중앙값이다.
 
-| Concurrency | BYPASS p95 | ACTIVE p95 | p95 improvement | BYPASS req/s | ACTIVE req/s | Throughput improvement | Result |
+| 동시 요청 수 | BYPASS p95 | ACTIVE p95 | p95 개선 | BYPASS 초당 요청 수 | ACTIVE 초당 요청 수 | 처리량 개선 | 결과 |
 |---:|---:|---:|---:|---:|---:|---:|:---:|
-| 1 | 96.665 ms | 63.117 ms | 34.7% | 16.87 | 24.21 | 43.5% | PASS |
-| 4 | 118.151 ms | 74.851 ms | 36.6% | 59.19 | 89.82 | 51.7% | PASS |
-| 16 | 200.146 ms | 142.422 ms | 28.8% | 114.38 | 169.03 | 47.8% | PASS |
-| 32 | 479.976 ms | 276.483 ms | 42.4% | 107.25 | 181.23 | 69.0% | PASS |
+| 1 | 96.665 ms | 63.117 ms | 34.7% | 16.87 | 24.21 | 43.5% | 통과 |
+| 4 | 118.151 ms | 74.851 ms | 36.6% | 59.19 | 89.82 | 51.7% | 통과 |
+| 16 | 200.146 ms | 142.422 ms | 28.8% | 114.38 | 169.03 | 47.8% | 통과 |
+| 32 | 479.976 ms | 276.483 ms | 42.4% | 107.25 | 181.23 | 69.0% | 통과 |
 
-Across the 9,600 measured board responses in both modes, every status was 200 and every run had zero application errors. Each ACTIVE run observed one stable response checksum; the corresponding BYPASS checksum set was identical.
+두 모드의 측정 게시판 응답 9,600건이 모두 200이었고, 매 실행의 애플리케이션 오류는 0이었다. ACTIVE 실행마다 응답 체크섬은 하나로 안정적이었으며, 대응하는 BYPASS 체크섬 집합과 일치했다.
 
-## Four-route mixed burst
+## 네 경로 혼합 단기 부하
 
-The four-route mix did not pass the global 20%/20% gate. At concurrency 32, mixed p95 improved by 23.9% and throughput by 15.3%; lower concurrency improvements were smaller. The page and category origins were already low-cost in this local dataset, so their cache overhead diluted board-list gains. This failed result is retained as evidence against enabling broader caching solely to improve latency on cheap routes.
+네 경로 혼합 시험은 전체 20%·20% 기준을 통과하지 못했다. 동시 요청 수 32에서 혼합 p95는 23.9%, 처리량은 15.3% 개선됐고, 더 낮은 동시 요청 수에서는 개선 폭이 작았다. 로컬 데이터의 페이지·카테고리 원본 비용이 이미 낮아 캐시 부가 비용이 게시판 개선 효과를 희석했다. 저비용 경로의 지연시간만을 이유로 캐시를 넓히지 않아야 한다는 근거로 이 실패 결과도 보존한다.
 
-All mixed runs still returned 200 with zero errors and matching per-route BYPASS/ACTIVE checksum sets.
+모든 혼합 실행은 오류 없이 200을 반환했고 경로별 BYPASS·ACTIVE 체크섬 집합도 일치했다.
 
-## Reproduction
+## 재현
 
 ```bash
 PHP_CLI_SERVER_WORKERS=32 php artisan serve --host=127.0.0.1 --port=18087 --no-reload
@@ -52,4 +52,4 @@ JWPC_BENCH_CONCURRENCIES='1 4 16 32' \
 tool/run-benchmark-matrix.sh /path/to/gnuboard7 http://127.0.0.1:18087 /tmp/jwpc-board-evidence
 ```
 
-The complete Beta gate remains pending until the same matrix passes on a production-equivalent web stack for 15–30 minutes with CPU/RSS, database, and Redis telemetry plus in-load mutation and fault injection.
+당시 전체 베타 검증은 미완료였다. 같은 시험 조합을 운영과 동등한 웹 환경에서 15~30분간 실행하며 CPU·상주 메모리·DB·Redis 지표와 부하 중 변경·장애 주입까지 검사해야 한다.

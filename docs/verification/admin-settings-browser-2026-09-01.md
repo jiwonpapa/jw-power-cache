@@ -1,41 +1,41 @@
-# Admin settings browser verification — 2026-09-01
+# 관리자 설정 브라우저 검증 — 2026-09-01
 
-## Verdict
+## 판정
 
 JW PowerCache의 관리자 설정은 격리된 G7 7.0.10 웹 환경에서 실제 브라우저로 렌더링, 저장, 재로드, 런타임 반영을 통과했다. 읽기 전용 관리자 계정은 설정 조회만 가능했고 저장은 HTTP 403으로 차단됐다. 검증 후 실행 모드는 `bypass`로 복원했으며 임시 사용자, 토큰, 역할은 삭제했다.
 
-## Environment
+## 당시 검증 환경
 
-- Core: Gnuboard 7 transaction-seam commit `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
-- Web: Apache 2.4.67 to PHP-FPM 8.5.3
-- Database/cache: MySQL 8.4.11 and Redis 7.4.11 (`noeviction`)
-- Admin template: `sirsoft-admin_basic` 1.0.7
-- Plugin candidate: `0.3.0-alpha.3`
+- 코어: 그누보드7 트랜잭션 내부 훅 후보 커밋 `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
+- 웹: Apache 2.4.67 → PHP-FPM 8.5.3
+- DB·캐시: MySQL 8.4.11, Redis 7.4.11(`noeviction`)
+- 관리자 템플릿: `sirsoft-admin_basic` 1.0.7
+- 플러그인 후보: `0.3.0-alpha.3`
 
-## Browser checks
+## 브라우저 검사
 
-| Check | Evidence | Result |
+| 검사 | 근거 | 결과 |
 |---|---|:---:|
-| Settings page rendering | mode/store, three cache route toggles, recovery/metrics/debug toggles, and five numeric limits rendered | PASS |
-| Change tracking | changing mode from `bypass` to `observe` enabled the Save button | PASS |
-| Save feedback | browser displayed `설정이 저장되었습니다.` and disabled Save after refetch | PASS |
-| Reload persistence | a full browser reload retained `observe` | PASS |
-| Runtime reflection | `power-cache:status --json` reported `mode=observe`, `driver=redis`, no warnings or errors | PASS |
-| Safe restoration | browser saved `bypass`; status reported `mode=bypass`, pending outbox zero, no errors | PASS |
+| 설정 페이지 표시 | 모드·저장소, 캐시 경로 3종, 복구·통계·진단 설정, 숫자 제한 5종 표시 | 통과 |
+| 변경 감지 | 모드를 `bypass`에서 `observe`로 변경하자 저장 버튼 활성화 | 통과 |
+| 저장 결과 안내 | `설정이 저장되었습니다.` 표시, 재조회 후 저장 버튼 비활성화 | 통과 |
+| 재로드 후 유지 | 브라우저 전체 새로고침 후에도 `observe` 유지 | 통과 |
+| 실제 실행 상태 반영 | `power-cache:status --json`에서 `mode=observe`, `driver=redis`, 경고·오류 없음 | 통과 |
+| 안전한 복원 | 브라우저에서 `bypass` 저장 후 `mode=bypass`, 미적용 아웃박스 0, 오류 없음 | 통과 |
 
-The runtime epoch changed from `2bd0709d-d729-4eda-b83b-c589a65be858` after the observe save to `5b65cec0-7bd7-416c-a896-68f71ae48a57` after restoring bypass. This confirms that the settings mutation reached the plugin invalidation path rather than changing only browser state.
+실행 세대는 observe 저장 후 `2bd0709d-d729-4eda-b83b-c589a65be858`에서 bypass 복원 후 `5b65cec0-7bd7-416c-a896-68f71ae48a57`로 바뀌었다. 브라우저 표시만 바뀐 것이 아니라 설정 변경이 플러그인 무효화 경로까지 반영됐음을 확인했다.
 
-## Permission checks
+## 권한 검사
 
-- Unauthenticated GET and PUT requests to the core plugin settings API returned HTTP 401.
-- A temporary administrator holding only `core.plugins.read` received HTTP 200 for GET and HTTP 403 for PUT.
-- The browser save was performed by an administrator with `core.plugins.update` and returned the visible success state.
-- The layout itself declares `core.plugins.update`; the core PUT route independently enforces `permission:admin,core.plugins.update`.
+- 코어 플러그인 설정 API의 비인증 GET·PUT은 HTTP 401을 반환했다.
+- `core.plugins.read`만 가진 임시 관리자는 GET에서 HTTP 200, PUT에서 HTTP 403을 받았다.
+- `core.plugins.update` 권한을 가진 관리자의 브라우저 저장은 성공 상태를 표시했다.
+- 레이아웃 자체가 `core.plugins.update`를 선언하고, 코어 PUT 경로도 독립적으로 `permission:admin,core.plugins.update`를 강제한다.
 
-## Contract defect found and fixed
+## 발견하고 수정한 계약 오류
 
-The browser rendered `cache_public_board_lists`, but that key was absent from the layout's validation `schema`. The key was added, and the unit contract now compares the complete key set across the plugin schema, defaults, frontend non-exposure schema, admin form fields, and admin layout schema.
+브라우저에는 `cache_public_board_lists`가 표시됐지만 레이아웃의 검증 `schema`에는 이 키가 없었다. 키를 추가했으며, 단위 테스트가 플러그인 스키마·기본값·프론트엔드 비노출 스키마·관리자 폼·관리자 레이아웃 스키마의 전체 키 집합을 비교하도록 했다.
 
-## Cleanup and boundary
+## 정리와 근거 범위
 
-Both temporary audit users, personal access tokens, and the temporary read-only role were deleted. No production system was accessed, no tag or GitHub release was created, and this result remains local verification against the versioned G7 transaction-seam candidate.
+임시 감사 사용자 2명, 개인 접근 토큰, 임시 읽기 전용 역할을 삭제했다. 운영 시스템에 접근하지 않았고 태그나 GitHub 릴리스를 만들지 않았다. 이 결과는 고정된 G7 트랜잭션 내부 훅 후보에 대한 당시 로컬 검증 기록이다.

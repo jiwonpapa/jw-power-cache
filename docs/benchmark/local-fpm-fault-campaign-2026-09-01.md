@@ -1,47 +1,47 @@
-# Local PHP-FPM fault campaign — 2026-09-01
+# 로컬 PHP-FPM 장애 주입 시험 — 2026-09-01
 
-## Verdict
+## 판정
 
-The 15-minute concurrency-16 campaign passed. All 7,203 responses were HTTP 200, with zero errors, zero stale responses, and zero personalized-field leaks while a committed page mutation, scoped purge, selective generation-key loss, and Redis restart overlapped live traffic. Both destructive cache faults rotated the runtime epoch and recovered automatically.
+동시 요청 수 16, 15분 장애 주입 시험을 통과했다. 페이지 변경 커밋, 범위별 무효화, 특정 세대 키 유실, Redis 재시작이 트래픽과 겹치는 동안 응답 7,203건이 모두 HTTP 200이었다. 오류·오래된 응답·개인화 필드 유출은 0건이었다. 두 캐시 장애 모두 실행 세대를 회전하고 자동 복구했다.
 
-This closes the concurrency-16 fault-injection portion of the Beta gate. It does not close the full Beta endurance matrix, which still requires 15–30 minute mixed-route measurements at concurrency 1, 4, 16, and 32.
+이는 베타 검증 중 동시 요청 수 16의 장애 주입 부분을 완료한 결과다. 동시 요청 수 1·4·16·32의 15~30분 혼합 경로 측정이 필요한 전체 내구성 검증을 완료한 것은 아니다.
 
-## Environment
+## 당시 검증 환경
 
-- Host: Apple M4 Pro, macOS 26.6.1
-- Web path: Apache 2.4.67 to PHP-FPM 8.5.3 over FastCGI
-- PHP-FPM: 32 static workers
-- Core: Gnuboard 7 transaction-seam commit `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
-- Database: MySQL 8.4.11 in an isolated local container
-- Cache: Redis 7.4.11 in an isolated restartable container, `noeviction`
-- Request target: a temporary published page created and mutated through the official PageService
+- 호스트: Apple M4 Pro, macOS 26.6.1
+- 웹 경로: Apache 2.4.67 → FastCGI → PHP-FPM 8.5.3
+- PHP-FPM: 고정 작업자 32개
+- 코어: 그누보드7 트랜잭션 내부 훅 커밋 `7d628dc4e57153a6217372a8a4bf8ea2904c680f`
+- DB: 격리된 로컬 컨테이너의 MySQL 8.4.11
+- 캐시: 재시작 가능한 격리 컨테이너의 Redis 7.4.11, `noeviction`
+- 요청 대상: 공식 PageService로 생성·수정한 임시 공개 페이지
 
-## Results
+## 결과
 
-| Duration | Concurrency | Target RPS | Requests | Actual RPS | p50 | p95 | p99 | HTTP/error/stale/personalized | Result |
+| 시간 | 동시 요청 수 | 목표 초당 요청 수 | 요청 수 | 실제 초당 요청 수 | p50 | p95 | p99 | HTTP 응답/오류/오래된 응답/개인화 유출 | 결과 |
 |---:|---:|---:|---:|---:|---:|---:|---:|---|:---:|
-| 30 s | 4 | 4 | 123 | 4.05 | 60.057 ms | 164.901 ms | 494.931 ms | 123/0/0/0 | PASS |
-| 120 s | 16 | 8 | 963 | 7.98 | 89.364 ms | 231.190 ms | 490.709 ms | 963/0/0/0 | PASS |
-| 902 s | 16 | 8 | 7,203 | 7.99 | 85.669 ms | 122.428 ms | 200.236 ms | 7,203/0/0/0 | PASS |
+| 30 s | 4 | 4 | 123 | 4.05 | 60.057 ms | 164.901 ms | 494.931 ms | 123/0/0/0 | 통과 |
+| 120 s | 16 | 8 | 963 | 7.98 | 89.364 ms | 231.190 ms | 490.709 ms | 963/0/0/0 | 통과 |
+| 902 s | 16 | 8 | 7,203 | 7.99 | 85.669 ms | 122.428 ms | 200.236 ms | 7,203/0/0/0 | 통과 |
 
-The 15-minute run observed 5,714 direct hits, 30 hits after fill-lock wait, 3 stored misses, 1,443 fail-closed emergency-dirty bypasses, and 13 barrier-error bypasses. Bypasses returned origin responses and did not expose stale or personalized data.
+15분 실행에서 일반 HIT 5,714건, 캐시 채우기 잠금 대기 후 HIT 30건, 최초 저장 MISS 3건, 비상 미복구 장벽에 따른 안전 우회 1,443건, 장벽 오류 우회 13건을 관측했다. 우회 요청은 원본 응답을 반환했으며 오래되거나 개인화된 데이터를 노출하지 않았다.
 
-## Fault gates
+## 장애별 검증
 
-| Injected action | Observed recovery | Result |
+| 주입한 작업 | 관측한 복구 | 결과 |
 |---|---|:---:|
-| Committed page mutation | Outbox event advanced from 51 to 52; only the old or new valid token was accepted during the overlap window | PASS |
-| Scoped page purge | Outbox event advanced from 52 to 53 | PASS |
-| Delete `page:all` generation key | Exactly one key deleted; runtime epoch rotated | PASS |
-| Restart Redis | Container returned to running; runtime epoch rotated again | PASS |
+| 페이지 변경 커밋 | 아웃박스 이벤트 51 → 52 증가, 겹치는 구간에 유효한 이전·새 토큰만 허용 | 통과 |
+| 페이지 범위 무효화 | 아웃박스 이벤트 52 → 53 증가 | 통과 |
+| `page:all` 세대 키 삭제 | 정확히 1개 키 삭제, 실행 세대 회전 | 통과 |
+| Redis 재시작 | 컨테이너 실행 상태 복귀, 실행 세대 재회전 | 통과 |
 
-After the run, the plugin was restored to BYPASS, doctor reported no errors or warnings, pending outbox was zero, emergency dirty was false, the temporary page count was zero, and Redis was running.
+종료 후 플러그인은 BYPASS로 복원했다. 진단 경고·오류와 미적용 아웃박스는 0, 비상 미복구 상태는 false, 임시 페이지 수는 0이었으며 Redis는 실행 중이었다.
 
-## Resource telemetry
+## 자원 측정
 
-Sixty samples were taken at 15-second intervals during the 15-minute run. The 32-worker PHP-FPM pool stayed at 32 workers. Aggregate process CPU averaged 61.80% and peaked at 213.40%; aggregate RSS averaged 1,370,153 KiB and peaked at 1,400,640 KiB. These figures are host-local capacity observations, not production sizing guidance.
+15분 실행 중 15초 간격으로 표본 60개를 수집했다. PHP-FPM 풀은 작업자 32개를 유지했다. 프로세스 CPU 사용량 합계는 평균 61.80%, 최대 213.40%였다. 상주 메모리(RSS) 합계는 평균 1,370,153 KiB, 최대 1,400,640 KiB였다. 호스트 내부의 자원 사용 관측값이며 운영 서버 용량 산정 지침은 아니다.
 
-## Reproduction
+## 재현
 
 ```bash
 JWPC_BENCH_ISOLATED=1 tool/run-fault-campaign.php \
@@ -54,4 +54,4 @@ JWPC_BENCH_ISOLATED=1 tool/run-fault-campaign.php \
   --output=/tmp/jwpc-fault-900s-c16.json
 ```
 
-The output path is fail-closed and will not be overwritten. The campaign requires `JWPC_BENCH_ISOLATED=1`, an exact non-auto-remove Redis container name, and an isolated G7 instance because it creates data, changes cache mode, deletes a control key, and restarts Redis.
+기존 출력 경로가 있으면 중단하며 덮어쓰지 않는다. 데이터를 생성하고 모드를 바꾸며 제어 키를 삭제하고 Redis를 재시작하므로, `JWPC_BENCH_ISOLATED=1`, 자동 삭제되지 않는 정확한 Redis 컨테이너 이름, 격리된 G7 환경이 필요하다.

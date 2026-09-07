@@ -1,43 +1,43 @@
-# Architecture and failure model
+# 구조와 장애 처리 모델
 
-## Request path
+## 요청 처리 경로
 
-Eligible requests pass an explicit route and presentation contract. Public board requests use a public key; authenticated board requests use a user-ID-isolated key and repeat the original read-permission check before HIT delivery. Active mode reads a clean control barrier, runtime snapshot, generation vector, and cached response. Any missing, malformed, dirty, or mismatched state becomes a MISS/BYPASS; it is never interpreted as generation zero.
+캐시 대상 요청은 명시적인 경로·표현 방식 계약을 통과해야 합니다. 공개 게시판 요청은 공개 키를 사용하며, 로그인한 사용자의 게시판 요청은 사용자 ID별 키로 격리하고 HIT 응답 직전에 원본과 같은 읽기 권한을 다시 검사합니다. 활성 모드에서는 정상 상태의 제어 장벽, 실행 상태 스냅샷, 세대 벡터, 캐시 응답을 조회합니다. 상태가 없거나 형식이 잘못되었거나 미복구·불일치 상태이면 MISS 또는 BYPASS로 처리하며, 세대 값 0으로 해석하지 않습니다.
 
-GET/HEAD requests with raw, parsed, or uploaded body input bypass the cache because controllers may read body fields through `all()`/`input()` while keys only include allowed query parameters. Date variants use G7's effective user timezone, not the PHP process timezone. Policy `response-api-v4` separates these responses from entries stored before the boundary fixes.
+원시 본문·파싱된 본문·업로드 입력이 있는 GET/HEAD는 캐시를 우회합니다. 컨트롤러는 `all()`·`input()`으로 본문 필드를 읽을 수 있지만, 캐시 키에는 허용된 쿼리 매개변수만 들어가기 때문입니다. 날짜 변형은 PHP 프로세스 시간대가 아닌 G7의 실제 사용자 시간대를 사용합니다. 정책 `response-api-v4`는 이러한 요청 경계 수정 이전에 저장된 응답과 새 응답을 분리합니다.
 
-After reading a cached entry, all three HIT paths recheck a clean barrier, the original site/runtime epoch, and current generations, then require the barrier token to remain unchanged across that check. Origin fills use the same final check. This detects mutations and resets that overlap the cache read without adding database queries to normal HITs; it does not remove the stock G7 commit-to-hook gap or claim an atomic transaction across HTTP delivery and content writes.
+캐시 항목을 읽은 뒤에는 일반 조회·잠금 획득 후 조회·잠금 대기 후 조회의 세 HIT 경로 모두 장벽의 정상 상태, 최초 사이트 ID와 실행 세대, 현재 데이터 세대를 재검사합니다. 검사 도중 장벽 토큰이 바뀌지 않았는지도 확인합니다. 원본 응답을 저장할 때도 같은 최종 검사를 수행합니다. 정상 HIT에 DB 질의를 추가하지 않고 캐시 읽기와 겹친 변경·초기화를 감지하지만, 기본 G7의 커밋과 훅 호출 사이 공백을 없애거나 HTTP 응답 전송과 콘텐츠 쓰기를 하나의 원자적 트랜잭션으로 보장하지는 않습니다.
 
-## Mutation path
+## 데이터 변경 처리 경로
 
-1. Set an emergency barrier with a unique event token.
-2. Append an outbox row and mark DB state dirty in the mutation transaction.
-3. After commit, monotonically advance affected generations.
-4. Mark the outbox event applied and clear DB dirty state when no event remains.
-5. Publish the clean runtime snapshot and clear only the matching barrier token.
+1. 고유 이벤트 토큰으로 비상 장벽을 설정합니다.
+2. 변경 트랜잭션에서 아웃박스 행을 추가하고 DB 상태를 미복구 상태로 표시합니다.
+3. 커밋 후 관련 세대 값을 단조 증가시킵니다.
+4. 아웃박스 이벤트를 적용 완료로 표시하고, 남은 이벤트가 없으면 DB의 미복구 상태를 해제합니다.
+5. 정상 실행 상태 스냅샷을 게시하고, 일치하는 토큰의 장벽만 해제합니다.
 
-On rollback, the transaction callback clears only its own token. It cannot clear a newer mutation's barrier.
+롤백 시 트랜잭션 콜백은 자신의 토큰만 해제합니다. 더 새로운 변경의 장벽은 해제할 수 없습니다.
 
-Scheduled/CLI reconciliation captures an existing `event:<id>` barrier before replay and clears only that matching token once no outbox work remains. It also repairs a stranded event barrier when the database work was already applied. Control-plane recovery tokens are left for their owning reset operation, and newer event tokens are never cleared by an older replay.
+예약·CLI 복구는 재처리 전에 기존 `event:<id>` 장벽을 확인하고, 남은 아웃박스 작업이 없을 때 그 토큰만 해제합니다. DB 작업이 이미 적용됐지만 장벽만 남은 경우도 복구합니다. 제어 상태 복구 토큰은 해당 초기화 작업이 처리하도록 남겨 두며, 오래된 재처리가 더 최신 이벤트 토큰을 해제하지 않습니다.
 
-After restoring a database backup, the restored runtime epoch must never be trusted while Redis may still contain responses from another point in time. `power-cache:restore-finalize --yes` therefore requires maintenance mode and `bypass`, holds or establishes the emergency barrier, reconciles restored outbox work, rotates the DB runtime epoch, resets every known generation, publishes a new runtime snapshot, and only then clears the barrier. A failure leaves the dirty barrier in place so traffic cannot reuse old responses.
+DB 백업을 복구한 뒤 Redis에 다른 시점의 응답이 남아 있을 수 있으므로, 복구된 실행 세대를 그대로 신뢰해서는 안 됩니다. 따라서 `power-cache:restore-finalize --yes`는 유지보수 모드와 `bypass`를 요구합니다. 비상 장벽을 유지하거나 설정한 뒤 복구된 아웃박스를 재처리하고, DB 실행 세대를 회전하며, 알려진 모든 데이터 세대를 초기화하고 새 실행 상태 스냅샷을 게시한 다음에만 장벽을 해제합니다. 실패하면 미복구 장벽을 유지해 과거 응답의 재사용을 막습니다.
 
-## Failure matrix
+## 장애별 처리
 
-| Failure | Serving behavior | Recovery |
+| 장애 | 응답 처리 | 복구 |
 |---|---|---|
-| G7 cache store unavailable | origin BYPASS | automatic on next healthy request |
-| generation key missing/invalid | HIT blocked | rotate DB runtime epoch and rebuild all known generations |
-| barrier or runtime snapshot missing | HIT blocked | rotate epoch and rebuild control plane |
-| process exits after DB commit | HIT blocked by dirty state/barrier | idempotent outbox reconciliation |
-| cache-store write fails in a post-commit hook | durable DB dirty/outbox retained | immediate apply attempt, then reconciliation after store recovery |
-| transaction rolls back | no generation change | matching token cleared by rollback callback |
-| old event completes after a newer event | newer barrier remains | token compare-and-set prevents unsafe clear |
-| direct SQL bypasses hooks | not detectable | operator must purge the affected scope or site |
+| G7 캐시 저장소 사용 불가 | 원본으로 우회(BYPASS) | 저장소가 정상화된 다음 요청에서 자동 복구 |
+| 세대 키 유실·형식 오류 | HIT 차단 | DB 실행 세대 회전 및 알려진 모든 세대 재구축 |
+| 장벽·실행 상태 스냅샷 유실 | HIT 차단 | 실행 세대 회전 및 제어 상태 재구축 |
+| DB 커밋 후 프로세스 종료 | 미복구 상태·장벽이 설정된 경우 HIT 차단 | 반복 실행해도 같은 결과를 내는 아웃박스 복구 |
+| 커밋 후 훅에서 캐시 저장 실패 | DB의 미복구 상태·아웃박스 보존 | 즉시 적용을 시도하고 저장소 복구 후 재처리 |
+| 트랜잭션 롤백 | 세대 변경 없음 | 롤백 콜백이 일치하는 토큰 해제 |
+| 오래된 이벤트가 최신 이벤트 뒤에 완료 | 최신 장벽 유지 | 토큰 비교 후 갱신으로 잘못된 해제 방지 |
+| 직접 SQL 실행으로 훅 우회 | 자동 감지 불가 | 운영자가 영향 범위 또는 사이트 캐시 무효화 |
 
-## Trust boundaries
+## 신뢰 경계
 
-- G7 authentication, permission, IDV, locale, and approved middleware execute before cache delivery.
-- The administrator-selected G7 cache store is untrusted for correctness; DB outbox/state is the durable authority.
-- Cache payloads are revalidated before response construction.
-- G7 7.0.9 hooks emitted after the content transaction commit leave a short core-level atomicity gap. This is the principal 1.0 blocker.
+- G7 인증, 권한, 본인인증(IDV), 언어 설정, 승인된 미들웨어가 캐시 응답보다 먼저 실행됩니다.
+- 관리자가 선택한 G7 캐시 저장소의 데이터도 정합성을 재검사합니다. 내구성 있는 기준은 DB 아웃박스와 상태입니다.
+- 응답을 구성하기 전에 캐시 내용을 다시 검증합니다.
+- G7 7.0.9에서 콘텐츠 트랜잭션 커밋 후 실행되는 훅에는 코어 수준의 짧은 원자성 공백이 남습니다. 이는 1.0 보증 조건의 주요 미해결 항목입니다.

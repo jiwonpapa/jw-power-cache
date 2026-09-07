@@ -1,29 +1,29 @@
-name: Bug report
-description: Report a reproducible JW PowerCache defect
-title: "[Bug]: "
+name: 오류 신고
+description: 재현 가능한 JW PowerCache 오류를 알려주세요.
+title: "[오류]: "
 labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: Do not report security vulnerabilities here. Follow SECURITY.md.
+      value: 보안 취약점은 여기에 공개하지 말고 SECURITY.md의 비공개 신고 절차를 따라주세요.
   - type: input
     id: versions
     attributes:
-      label: Versions
-      description: JW PowerCache, G7, PHP, database, Redis, and cache driver versions
+      label: 사용 버전
+      description: JW PowerCache, G7, PHP, DB, Redis 및 캐시 드라이버 버전
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
-      label: Reproduction
-      description: Minimal steps, expected behavior, and actual behavior
+      label: 재현 방법
+      description: 최소 재현 절차, 기대한 동작, 실제 동작을 알려주세요.
     validations:
       required: true
   - type: textarea
     id: doctor
     attributes:
-      label: Sanitized doctor output
-      description: Output from php artisan power-cache:doctor --json with secrets removed
+      label: 민감정보를 제거한 진단 결과
+      description: php artisan power-cache:doctor --json 실행 결과에서 비밀정보를 제거해 첨부해주세요.
     validations:
       required: true

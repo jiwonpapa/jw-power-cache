@@ -1,30 +1,30 @@
-# Clean lifecycle verification — 2026-09-01
+# 클린 설치·수명주기 검증 — 2026-09-01
 
-## Scope
+## 당시 검증 범위
 
-- G7 core: `7d628dc4` (`7.0.10` transaction-seam candidate)
-- JW PowerCache: `48a39de6` (`0.3.0-alpha.2`)
-- Database: MySQL 8.4, isolated empty database, non-privileged application user
-- Store: local file driver with `JW_POWER_CACHE_FILE_SINGLE_NODE=true`
-- Modules: page `1.1.1`, board `1.1.1`, ecommerce `1.2.1`
+- G7 코어: `7d628dc4`(`7.0.10` 트랜잭션 내부 훅 후보)
+- JW PowerCache: `48a39de6`(`0.3.0-alpha.2`)
+- DB: MySQL 8.4, 격리된 빈 DB, 비특권 애플리케이션 사용자
+- 저장소: 로컬 파일 드라이버, `JW_POWER_CACHE_FILE_SINGLE_NODE=true`
+- 모듈: 페이지 `1.1.1`, 게시판 `1.1.1`, 이커머스 `1.2.1`
 
-This is a disposable clean-instance lifecycle check. It is not production soak or release-upgrade evidence.
+폐기 가능한 새 환경의 수명주기 검사다. 운영 장기 안정성이나 릴리스 업데이트를 검증한 근거는 아니다. 당시 버전의 저장소 설정을 기록한 것으로, 현재 설치 안내를 대체하지 않는다.
 
-## Results
+## 결과
 
-| Gate | Result | Evidence |
+| 검증 항목 | 결과 | 근거 |
 |---|---|---|
-| Install from release archive | PASS | Plugin registered as `0.3.0-alpha.2`; migrations completed |
-| Safe default | PASS | Initial mode was `observe` |
-| Doctor and control-plane bootstrap | PASS | Tables/store/barrier/transactional capability and all four route contracts were healthy |
-| Activate | PASS | `power-cache:mode active` completed with dirty `0`, pending `0`, emergency dirty `false` |
-| Deactivate | PASS | Plugin status became inactive and all four extension middleware registrations disappeared |
-| Reactivate | PASS | Runtime epoch changed and all four middleware registrations returned; doctor passed |
-| Uninstall with data deletion | PASS | Plugin record, installed directory, state table, and outbox table were removed |
-| Reinstall after uninstall | PASS | Fresh site ID/runtime epoch created in observe mode; doctor passed |
+| 릴리스 압축파일 설치 | 통과 | `0.3.0-alpha.2` 등록, 마이그레이션 완료 |
+| 안전한 기본값 | 통과 | 최초 모드 `observe` |
+| 진단·제어 상태 초기 구성 | 통과 | 테이블·저장소·장벽·트랜잭션 기능과 경로 계약 4개 정상 |
+| 활성화 | 통과 | `power-cache:mode active` 완료, dirty `0`, pending `0`, emergency dirty `false` |
+| 비활성화 | 통과 | 플러그인 비활성화, 확장 미들웨어 등록 4개 제거 |
+| 재활성화 | 통과 | 실행 세대 변경, 미들웨어 등록 4개 복원, 진단 통과 |
+| 데이터 포함 제거 | 통과 | 플러그인 레코드·설치 폴더·상태 테이블·아웃박스 테이블 제거 |
+| 제거 후 재설치 | 통과 | observe 모드에서 새 사이트 ID·실행 세대 생성, 진단 통과 |
 
-## Safety observations
+## 안전성 확인
 
-- G7 deliberately refuses extension loading when the application uses a privileged database account. The lifecycle run therefore used a dedicated non-privileged application user.
-- Without the explicit single-node acknowledgement, file-store recovery and active HIT remain fail-closed. This is expected behavior, not an activation failure.
-- A later official release must repeat this run with the final G7 tag, Redis, an upgrade from the previous supported plugin release, and a release rollback.
+- G7은 특권 DB 계정을 사용하는 애플리케이션에서 확장 로딩을 거부하므로, 전용 비특권 사용자로 검사했다.
+- 단일 서버 운영에 대한 명시적 확인이 없으면 파일 저장소 복구와 활성 HIT를 차단했다. 의도된 안전 동작이며 활성화 오류가 아니다.
+- 이후 공식 배포에서는 최종 G7 태그·Redis·이전 지원 버전에서의 업데이트·릴리스 롤백을 포함해 검사를 반복해야 한다.

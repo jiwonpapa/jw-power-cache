@@ -2,7 +2,7 @@
 
 > 측정일: 2026-08-23 KST
 > 대상: `https://www.g7devops.com` 온라인 테스트 서버
-> 결론: 50,002건 공개 게시판 목록과 카테고리 API에는 명확한 효과가 있었고, 작은 페이지 API에는 효과가 제한적이었습니다. Technical Preview 범위로 계속 운영하되 전체 사이트 캐시로 확대해서는 안 됩니다.
+> 결론: 50,002건 공개 게시판 목록과 카테고리 API에는 명확한 효과가 있었고, 작은 페이지 API에는 효과가 제한적이었습니다. 기술 미리보기 범위로 계속 운영하되 전체 사이트 캐시로 확대해서는 안 됩니다.
 
 ## 결론 먼저
 
@@ -21,19 +21,19 @@
 
 | 항목 | 값 |
 |---|---|
-| 플러그인 | `jw-power_cache` 0.2.0 Technical Preview |
+| 플러그인 | `jw-power_cache` 0.2.0 기술 미리보기 |
 | 서버 선언 버전 | Gnuboard7 7.0.8 |
 | PHP | 8.5.9 FPM |
 | 서버 | 2 vCPU, RAM 1.9GiB, swap 1.9GiB |
 | 전용 저장소 | Redis DB 7 |
 | 현재 모드 | `active` |
 | doctor | PASS |
-| dirty / pending outbox / emergency | 0 / 0 / no |
+| dirty / pending 아웃박스 / emergency | 0 / 0 / no |
 | 플러그인 Redis 사용량 | 39 keys, 345,976 bytes |
 
-서버 Git 기준점은 `7.0.3-dirty`로 표시되지만 런타임 `APP_VERSION`은 7.0.8이고, 7.0.8의 확장 미들웨어·동기 훅 계약이 실제 서버 코드에 존재함을 설치 전 확인했습니다. 재현 시에는 이 서버의 파일 업데이트 이력과 Git ancestry가 다르다는 점을 함께 봐야 합니다.
+서버 Git 기준점은 `7.0.3-dirty`로 표시되지만 런타임 `APP_VERSION`은 7.0.8이고, 7.0.8의 확장 미들웨어·동기 훅 계약이 실제 서버 코드에 존재함을 설치 전 확인했습니다. 재현 시에는 이 서버의 파일 업데이트 이력과 Git 커밋 이력가 다르다는 점을 함께 봐야 합니다.
 
-## ON/OFF 방법
+## 캐시 켜기·끄기
 
 관리자 플러그인 설정의 `mode` 또는 다음 명령으로 즉시 전환할 수 있습니다.
 
@@ -57,9 +57,9 @@ active 다음 요청: HIT; reason=fresh_generation
 
 - 도구: ApacheBench 2.3
 - 프로토콜: HTTPS, keep-alive
-- 각 라우트: 80 requests, concurrency 4
+- 각 라우트: 요청 80건, 동시 요청 수 4
 - OFF: 플러그인을 설치·활성화한 채 `mode=bypass`
-- ON: `mode=active`, Redis warm HIT
+- ON: `mode=active`, Redis 예열 후 HIT
 - 비교 전 각 라우트를 1회 예열
 - PHP CPU: `php8.5-fpm.service`의 누적 `CPUUsageNSec` 전후 차이
 - DB 부하: MySQL 전역 `Questions` 전후 차이
@@ -79,22 +79,22 @@ OFF도 같은 플러그인과 확장 게이트를 통과하므로, 플러그인 
 | 페이지 `about` | OFF | 108ms | 141ms | 151ms | 34.03 | 3,350ms | 724 | 9.05 |
 | 페이지 `about` | ON | 104ms | 135ms | 143ms | 36.08 | 3,208ms | 564 | 7.05 |
 
-MySQL `Questions`는 전역 카운터라 측정용 조회와 같은 시각의 외부 요청이 소량 포함될 수 있습니다. 방향성과 요청당 고정 바닥을 보는 근거로 사용했으며, 세션별 exact query profile로 과장하지 않습니다.
+MySQL `Questions`는 전역 카운터라 측정용 조회와 같은 시각의 외부 요청이 소량 포함될 수 있습니다. 방향성과 요청당 고정 바닥을 보는 근거로 사용했으며, 세션별 정확한 질의 분석로 과장하지 않습니다.
 
 ## 실측 중 발견해 바로 수정한 결함
 
-초기 구현은 HIT마다 DB state table을 읽어 dirty/outbox 장벽을 확인해 세 라우트 모두 요청당 Questions가 약 10개로 늘었습니다. 지연시간만 줄고 DB 병목을 남기는 구조라 배포 완료로 판정하지 않았습니다.
+초기 구현은 HIT마다 DB state table을 읽어 dirty/아웃박스 장벽을 확인해 세 라우트 모두 요청당 Questions가 약 10개로 늘었습니다. 지연시간만 줄고 DB 병목을 남기는 구조라 배포 완료로 판정하지 않았습니다.
 
 수정 후에는 다음 순서로 바꿨습니다.
 
-1. 정상 상태의 `site_id`, `runtime_epoch`, `dirty_event_id=0` snapshot을 전용 Redis에 저장
-2. 변경 훅은 콘텐츠 DB 커밋 전에 Redis emergency barrier를 먼저 설정
-3. 커밋 후 outbox 세대 적용·DB clean 확인·Redis snapshot 반영을 완료
-4. 모든 단계가 끝난 뒤에만 emergency barrier 해제
-5. 정상 HIT는 Redis snapshot·emergency·generation만 확인하고 플러그인 DB 조회는 0
-6. dirty, 저장소 장애, snapshot 소실 때만 DB outbox 복구 경로 실행
+1. 정상 상태의 `site_id`, `runtime_epoch`, `dirty_event_id=0` 스냅샷을 전용 Redis에 저장
+2. 변경 훅은 콘텐츠 DB 커밋 전에 Redis emergency 장벽를 먼저 설정
+3. 커밋 후 아웃박스 세대 적용·DB clean 확인·Redis 스냅샷 반영을 완료
+4. 모든 단계가 끝난 뒤에만 emergency 장벽 해제
+5. 정상 HIT는 Redis 스냅샷·emergency·세대만 확인하고 플러그인 DB 조회는 0
+6. dirty, 저장소 장애, 스냅샷 소실 때만 DB 아웃박스 복구 경로 실행
 
-독립 회귀 테스트에서 페이지·카테고리 정상 HIT의 플러그인 DB query 0을 고정했고 전체 **33 tests / 352 assertions**가 통과했습니다. 게시판 HIT는 캐시 게이트 뒤에 남은 route permission을 안전하게 대체하기 위해 원본과 같은 guest role/permission 선검증을 실행하므로 전체 요청당 약 2 Questions가 추가로 필요합니다.
+독립 회귀 테스트에서 페이지·카테고리 정상 HIT의 플러그인 DB query 0을 고정했고 전체 **테스트 33개 / 검증문 352개**가 통과했습니다. 게시판 HIT는 캐시 게이트 뒤에 남은 route permission을 안전하게 대체하기 위해 원본과 같은 guest role/permission 선검증을 실행하므로 전체 요청당 약 2 Questions가 추가로 필요합니다.
 
 ## 무효화 실서버 확인
 
@@ -106,7 +106,7 @@ MySQL `Questions`는 전역 카운터라 측정용 조회와 같은 시각의 �
 | `purge --scope=category` | 카테고리가 `MISS-STORED → HIT` | 페이지는 계속 HIT | 통과 |
 | `purge --scope=board` | 게시판이 `MISS-STORED → HIT` | 페이지·카테고리는 계속 HIT | 통과 |
 
-두 경우 모두 종료 뒤 `dirty=0`, `pending=0`, `emergency=no`, doctor PASS였습니다.
+각 경우 모두 종료 뒤 `dirty=0`, `pending=0`, `emergency=no`, doctor PASS였습니다.
 
 ## 남은 병목과 제품 판단
 
@@ -114,9 +114,9 @@ MySQL `Questions`는 전역 카운터라 측정용 조회와 같은 시각의 �
 
 따라서 판정은 다음과 같습니다.
 
-- **출시 가치 있음:** 공개 게시판 hot-list와 원본 조립·직렬화·DB 조회 비용이 큰 공개 API
+- **출시 가치 있음:** 공개 게시판 상위 목록와 원본 조립·직렬화·DB 조회 비용이 큰 공개 API
 - **효과 제한:** 이미 100ms 안팎인 작은 JSON, 사용자별·검색·쓰기·파일 라우트
 - **현재 금지:** “그누보드7 전체를 무조건 가속하는 0-query 캐시”라는 표현
 - **코어 개선 ROI:** 인증·권한·IDV가 끝난 뒤 컨트롤러 직전에 실행되는 공식 `after_route_guards` seam
 
-이번 80건 측정은 기능·방향 확인용 smoke A/B입니다. 정식 Beta 판정 전에는 혼합 라우트 15~30분, 동시성 단계 1/4/16/32, 쓰기와 purge 동시 실행, Redis 장애·복구, p99·RSS·swap·Redis ops를 같은 하네스로 반복 측정해야 합니다.
+이번 80건 측정은 기능·방향 확인용 기본 동작 A/B입니다. 정식 베타 판정 전에는 혼합 라우트 15~30분, 동시성 단계 1/4/16/32, 쓰기와 purge 동시 실행, Redis 장애·복구, p99·RSS·swap·Redis ops를 같은 하네스로 반복 측정해야 합니다.

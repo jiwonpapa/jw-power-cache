@@ -1,20 +1,24 @@
-# Security Policy
+# 보안 정책
 
-## Supported versions
+## 지원 버전
 
-Security fixes are provided for the latest released minor version. Technical Preview builds are not covered by a production SLA, but confirmed vulnerabilities will still be triaged.
+가장 최근에 릴리스한 마이너 버전에 보안 수정을 제공합니다. 기술 미리보기 버전에는 운영 서비스 수준 협약(SLA)이 적용되지 않지만, 확인된 취약점은 계속 분류하고 대응합니다.
 
-## Reporting a vulnerability
+## 취약점 신고
 
-Do not open a public issue for a suspected vulnerability. Use GitHub's **Report a vulnerability** form in the repository Security tab and include:
+취약점이 의심되면 공개 이슈를 작성하지 마십시오. 저장소의 **Security → Report a vulnerability** 비공개 신고 양식을 이용해 다음 내용을 알려주십시오.
 
-- affected version and G7 version;
-- reproduction steps or a minimal proof of concept;
-- impact, especially whether authenticated or personalized data can enter a cache;
-- suggested mitigation, if known.
+- 영향을 받는 JW PowerCache 및 G7 버전
+- 재현 절차 또는 최소 재현 코드
+- 영향 범위, 특히 인증·개인화 데이터가 캐시에 들어갈 수 있는지 여부
+- 알고 있다면 임시 완화 방법
 
-We aim to acknowledge a report within 3 business days, provide a triage result within 7 business days, and coordinate disclosure after a fix is available. Never include production credentials or personal data.
+신고 접수는 영업일 기준 3일 이내, 분류 결과는 7일 이내 안내하는 것을 목표로 합니다. 수정본이 준비된 뒤 공개 일정을 협의합니다. 운영 인증정보나 개인정보는 첨부하지 마십시오.
 
-## Security invariants
+## 반드시 유지하는 보안 조건
 
-Authenticated page and category requests, unknown public cookies, unknown query parameters, unapproved middleware stacks, sensitive non-authentication tokens, and unsafe response headers are always bypassed. Board-list Bearer requests run after `optional.sanctum`: resolved users are keyed by authenticated user ID, while unresolved credentials use the public key and public read permission. Safe public board GET requests may carry only the standard G7 session/XSRF browser context. Missing or malformed control-plane state blocks HIT delivery and rebuilds the control plane with a new runtime epoch.
+인증된 페이지·카테고리 요청, 공개 요청의 알 수 없는 쿠키, 미등록 쿼리 매개변수, 승인되지 않은 미들웨어 구성, 인증 용도가 아닌 민감 토큰, 안전하지 않은 응답 헤더는 항상 캐시를 우회합니다.
+
+게시판 목록의 Bearer 요청은 `optional.sanctum` 이후에 처리합니다. 인증된 사용자는 사용자 ID별 키로 격리하고, 사용자로 해석되지 않은 인증정보는 공개 키와 공개 읽기 권한으로 처리합니다. 안전한 공개 게시판 GET에는 G7 표준 세션·XSRF 브라우저 정보만 허용합니다.
+
+캐시 제어 상태가 없거나 형식이 잘못되면 HIT 응답을 차단하고, 새로운 실행 세대(`runtime epoch`)로 제어 상태를 재구축합니다.
