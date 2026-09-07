@@ -6,7 +6,7 @@
 
 **Gnuboard 7 공개 API를 더 빠르게 제공하는 응답 캐시 플러그인입니다.** 페이지, 쇼핑몰 카테고리, 공개 게시판 목록의 반복 조회를 캐시하고 콘텐츠 변경 시 세대를 회전해 이전 응답을 즉시 무효화합니다.
 
-현재 버전은 `0.4.0-beta.2 Open Source Beta`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
+현재 버전은 `0.4.0`입니다. 제품명은 **JW PowerCache**, G7 플러그인 식별자는 `jw-power_cache`입니다. 공식 Gnuboard 7 `7.0.9` 이상과 해당 버전에 포함된 Page `1.1.0`, Board `1.1.0`, Ecommerce `1.2.0` 이상을 지원합니다.
 
 ## 플러그인 용도
 
@@ -34,6 +34,8 @@
 
 별도 `JW_POWER_CACHE_REDIS_*` 환경변수는 필요하지 않습니다. 여러 웹 노드를 운영한다면 G7 관리자에서 Redis 같은 공유 캐시 저장소를 선택하십시오.
 
+기존 설치는 **플러그인 관리 → 업데이트 확인 → JW PowerCache 업데이트**를 사용합니다. 새 버전은 GitHub 일반 Latest 릴리스로 발행하며, `main` 푸시만으로는 업데이트가 표시되지 않습니다. 개발자용 [업데이트 배포 규칙](docs/releases/README.md)을 따릅니다.
+
 `Loading UX` 후보 기능은 전체 페이지·큰 콘텐츠의 원형 스피너를 실제 레이아웃 구조에 맞는 스켈레톤으로 바꾸며 캐시 `observe`·`active`·`bypass` 모드와 독립적으로 동작합니다. 기본값은 OFF입니다. G7 7.0.9 실제 런타임에는 문서에 나온 `registerComponents()`가 없으므로, PowerCache는 컴포넌트 레지스트리를 우회하지 않고 코어 전환 오버레이의 수명과 공개 `TransitionManager` 신호만 따라가는 독립 DOM 렌더러를 사용합니다. 상세 계약은 [Loading UX 설정·지원 범위](docs/loading-ux.md)를 확인하십시오.
 
 ## 현재 지원 범위
@@ -56,7 +58,7 @@
 
 게시판 목록은 원본 `permission:user,sirsoft-board.{slug}.posts.read`와 같은 권한을 HIT 전에도 확인합니다. 공개 요청은 공개 키, 로그인 요청은 사용자 ID별 키로 격리해 `is_author`와 `abilities`가 다른 사용자에게 섞이지 않습니다. 글·댓글·첨부·게시판 설정·권한·작성자 표시가 바뀌면 `board:all` 세대를 즉시 회전합니다. `created_at_formatted`, `is_new`, 조회수처럼 DB 쓰기 없이도 표시가 변하는 값만 60초 시계 버킷으로 제한하며, PC/모바일 `per_page` 차이도 별도 키로 격리합니다.
 
-날짜 표시에 사용하는 G7의 실제 사용자 시간대를 캐시 키에도 적용합니다. JSON·폼 본문이 있는 GET/HEAD는 원본으로 우회해 URL 조건과 다른 결과가 일반 조회 캐시에 섞이지 않도록 합니다. `0.4.0-beta.2`는 정책 키를 `response-api-v4`로 변경하므로 이전 정책의 응답을 재사용하지 않습니다.
+날짜 표시에 사용하는 G7의 실제 사용자 시간대를 캐시 키에도 적용합니다. JSON·폼 본문이 있는 GET/HEAD는 원본으로 우회해 URL 조건과 다른 결과가 일반 조회 캐시에 섞이지 않도록 합니다. `0.4.0`은 정책 키 `response-api-v4`를 사용하므로 이전 정책의 응답을 재사용하지 않습니다.
 
 ## 정합성 모델
 
@@ -69,7 +71,7 @@
 
 Redis eviction이나 운영 실수로 barrier, snapshot, generation 키 하나만 사라져도 값 `0`으로 간주하지 않습니다. 모든 HIT를 막고 DB의 runtime epoch를 회전한 뒤 알려진 전체 generation 제어면을 재구축하므로, 물리적으로 남은 과거 응답은 새 키 공간에서 도달할 수 없습니다.
 
-공식 G7 7.0.9에는 플러그인 훅을 서비스 트랜잭션 안으로 강제하는 별도 capability가 없습니다. 따라서 doctor는 이를 오류가 아닌 보증 수준 경고로 표시합니다. 표준 동기 훅만으로 active 사용이 가능하지만, 프로세스가 원본 커밋 직후 훅 호출 전에 비정상 종료되는 매우 짧은 구간은 원자적으로 차단하지 못합니다. 직접 SQL·importer처럼 공식 훅을 우회하는 변경과 함께 이 제한 때문에 현재 버전은 Open Source Beta입니다.
+공식 G7 7.0.9에는 플러그인 훅을 서비스 트랜잭션 안으로 강제하는 별도 capability가 없습니다. 따라서 doctor는 이를 오류가 아닌 보증 수준 경고로 표시합니다. 표준 동기 훅만으로 active 사용이 가능하지만, 프로세스가 원본 커밋 직후 훅 호출 전에 비정상 종료되는 매우 짧은 구간은 원자적으로 차단하지 못합니다. 직접 SQL·importer처럼 공식 훅을 우회하는 변경도 자동 감지하지 못합니다. 일반 릴리스 전환은 이러한 지원 범위와 정합성 보증을 확대하지 않습니다.
 
 사이트 전역 설정과 모듈·플러그인·템플릿·언어팩 생명주기는 아직 일반 after 훅 경계입니다. 이 관리 작업은 `bypass` 전환 → 작업 수행 → `purge --scope=site` → doctor → `active` 순서의 유지보수 절차를 적용해야 합니다.
 
@@ -201,7 +203,7 @@ G7_ROOT=/path/to/gnuboard7 \
   --bootstrap tests/bootstrap.php tests
 ```
 
-현재 공식 G7 7.0.9·PHP 8.5.3·SQLite·Redis 7.4 로컬 회귀 테스트는 **103 tests / 612 assertions / 2 capability skips**입니다. 제외된 2개는 공식 G7에 없는 동일 트랜잭션 훅 capability 검사입니다. 공개·로그인 사용자 키 격리, GET 본문 우회, 사용자 시간대 분리, 게시판 read 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 outbox commit/rollback, 예약 복구와 동시 갱신, 정책 업그레이드, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
+현재 공식 G7 7.0.9·PHP 8.5.3·SQLite·Redis 7.4 로컬 회귀 테스트는 **104 tests / 617 assertions / 2 capability skips**입니다. 제외된 2개는 공식 G7에 없는 동일 트랜잭션 훅 capability 검사입니다. 공개·로그인 사용자 키 격리, GET 본문 우회, 사용자 시간대 분리, 게시판 read 권한·페이지 범위·PC/모바일 변형, 공식 G7 표준 캐시 계약, 변경 훅 커버리지, 응답 저장 금지, 변조·구형 저장물 거부, 설정·스케줄 계약, 세대 단조성, 제어 키 선택 유실, 충돌 토큰, DB lease lock, MISS→HIT, 권한 회수 후 즉시 BYPASS, 원본 변경과 outbox commit/rollback, 예약 복구와 동시 갱신, 정책 업그레이드, 릴리스 버전 일치, 벤치마크 판정을 검증합니다. CI는 PHP 8.2/8.5, 공식 G7 7.0.9 커밋, Redis 7.4, MySQL 8.4, MariaDB 11.4를 검사합니다.
 
 실서버 공개 HTTPS에서 수행한 최신 5VU 비교 결과는 [g7devops.com 실서버 벤치마크](docs/benchmark/g7devops-live-5vu-2026-09-01.md)에 기록되어 있습니다. 4개 주요 API, 총 2,880건에서 오류·응답 불일치 없이 경로별 p95가 49.0~68.9% 개선됐습니다.
 
@@ -209,7 +211,7 @@ G7_ROOT=/path/to/gnuboard7 \
 
 Redis 로컬 재현 환경의 3회 중앙값 게시판 성능 결과는 [로컬 Beta 성능 보고서](docs/benchmark/local-beta-performance-2026-09-01.md)에 기록되어 있습니다. 15분 FPM 내구성·장애 주입 결과는 [장애 캠페인 보고서](docs/benchmark/local-fpm-fault-campaign-2026-09-01.md)에 기록되어 있습니다.
 
-과거 transaction-seam 후보에서 수행한 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다. 공식 7.0.9 및 표준 저장소 기준 결과는 Beta.2 릴리스 보고서에 별도로 기록합니다.
+과거 transaction-seam 후보에서 수행한 클린 설치·활성화·비활성화·데이터 제거·재설치 결과는 [클린 수명주기 검증 보고서](docs/verification/clean-lifecycle-2026-09-01.md)에 기록되어 있습니다. 현재 공식 7.0.9 및 표준 저장소 기준 검증 범위는 [0.4.0 릴리스 노트](docs/releases/v0.4.0.md)를 확인하십시오.
 
 관리자 설정 실브라우저 결과는 [관리자 설정 검증 보고서](docs/verification/admin-settings-browser-2026-09-01.md), 실제 백업 복구와 릴리스 롤백 결과는 [복구·롤백 검증 보고서](docs/verification/backup-restore-release-rollback-2026-09-01.md)에 기록되어 있습니다.
 

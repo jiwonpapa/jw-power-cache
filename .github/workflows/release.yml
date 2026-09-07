@@ -83,7 +83,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          release_args=("$GITHUB_REF_NAME" dist/* --verify-tag --title "JW PowerCache $GITHUB_REF_NAME")
+          release_args=("$GITHUB_REF_NAME" "dist/jw-power_cache-${GITHUB_REF_NAME#v}.zip" dist/SHA256SUMS --verify-tag --title "JW PowerCache $GITHUB_REF_NAME")
           notes_file="docs/releases/${GITHUB_REF_NAME}.md"
           if [[ -f "$notes_file" ]]; then
             release_args+=(--notes-file "$notes_file")
@@ -92,5 +92,23 @@ jobs:
           fi
           if [[ "$GITHUB_REF_NAME" == *-* ]]; then
             release_args+=(--prerelease)
+          else
+            release_args+=(--latest)
           fi
           gh release create "${release_args[@]}"
+
+      - name: Verify G7 update discovery
+        if: ${{ !contains(github.ref_name, '-') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for attempt in 1 2 3 4 5 6; do
+            latest="$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq 'select(.draft == false and .prerelease == false) | .tag_name')" || latest=""
+            if [[ "$latest" == "$GITHUB_REF_NAME" ]]; then
+              echo "G7 latest release discovery verified: $latest"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "G7 cannot discover expected release $GITHUB_REF_NAME via releases/latest." >&2
+          exit 1

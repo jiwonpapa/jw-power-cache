@@ -25,7 +25,7 @@ final class PluginContractTest extends TestCase
         // AbstractPlugin::getIdentifier()는 설치 디렉터리명에서 추론한다.
         // 독립 저장소 루트의 표시용 폴더명과 G7 설치 식별자를 분리해 검증한다.
         self::assertSame('jw-power_cache', $manifest['identifier']);
-        self::assertSame('0.4.0-beta.2', $plugin->getVersion());
+        self::assertSame('0.4.0', $plugin->getVersion());
         self::assertSame('observe', $plugin->getConfigValues()['mode']);
         self::assertArrayNotHasKey('store_driver', $plugin->getConfigValues());
         self::assertSame('>=7.0.9', $manifest['g7_version']);
@@ -39,6 +39,22 @@ final class PluginContractTest extends TestCase
         self::assertSame('after_core', $middleware[0]['timing']);
         self::assertCount(4, $middleware[0]['targets']);
         self::assertContains('api.modules.sirsoft-board.boards.posts.index', $middleware[0]['targets']);
+    }
+
+    public function test_release_versions_and_notes_match_the_plugin_manifest(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $read = static fn (string $file): array => json_decode(
+            file_get_contents($root.'/'.$file), true, flags: JSON_THROW_ON_ERROR,
+        );
+        $version = $read('plugin.json')['version'];
+        $lock = $read('package-lock.json');
+
+        self::assertSame($version, $read('package.json')['version']);
+        self::assertSame($version, $lock['version']);
+        self::assertSame($version, $lock['packages']['']['version']);
+        self::assertFileExists($root.'/docs/releases/v'.$version.'.md');
+        self::assertStringContainsString('## ['.$version.']', file_get_contents($root.'/CHANGELOG.md'));
     }
 
     public function test_every_invalidation_hook_is_forced_synchronous(): void
