@@ -94,6 +94,7 @@ final class CoreInvalidationListener implements HookListenerInterface
             'core.user.after_withdraw',
             'core.user.after_delete',
             'sirsoft-core.user.after_bulk_update',
+            'core.user.after_bulk_update_roles',
             'core.attachment.after_upload',
             'core.attachment.after_delete',
             'core.attachment.after_reorder',
@@ -103,7 +104,8 @@ final class CoreInvalidationListener implements HookListenerInterface
                 'method' => 'handleBoardPresentationMutation',
                 'type' => 'action',
                 'sync' => true,
-                'transactional' => true,
+                // 역할 일괄 변경 훅은 원본 역할 변경 트랜잭션이 끝난 뒤 발행됩니다.
+                'transactional' => $hook !== 'core.user.after_bulk_update_roles',
             ];
         }
 

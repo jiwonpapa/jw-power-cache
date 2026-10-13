@@ -43,7 +43,7 @@ abstract class PowerCacheTestCase extends TestCase
             ],
             'jw_power_cache' => [
                 'format_version' => 2,
-                'policy_version' => 'response-api-v4',
+                'policy_version' => 'response-api-v5',
                 'control_scopes' => ['site', 'page:all', 'category:tree', 'board:all'],
             ],
         ]));

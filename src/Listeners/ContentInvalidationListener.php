@@ -82,6 +82,7 @@ final class ContentInvalidationListener implements HookListenerInterface
             'sirsoft-board.post.after_delete',
             'sirsoft-board.post.after_blind',
             'sirsoft-board.post.after_restore',
+            'sirsoft-board.reaction.after_react',
             'sirsoft-board.comment.after_create',
             'sirsoft-board.comment.after_update',
             'sirsoft-board.comment.after_delete',

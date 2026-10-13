@@ -109,7 +109,7 @@ final class GuestResponseCacheTest extends PowerCacheTestCase
                 headers: ['User-Agent' => 'Mozilla/5.0 Macintosh'],
                 routePattern: 'api/modules/sirsoft-board/boards/{slug}/posts',
             );
-            $role = new Role(['identifier' => 'guest']);
+            $role = new Role(['identifier' => 'guest', 'is_active' => true]);
             $role->setRelation('permissions', collect([
                 new Permission([
                     'identifier' => 'sirsoft-board.freebd.posts.read',

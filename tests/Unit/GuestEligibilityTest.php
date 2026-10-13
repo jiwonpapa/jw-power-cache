@@ -143,7 +143,7 @@ final class GuestEligibilityTest extends PowerCacheTestCase
             query: ['page' => '3', 'per_page' => '50'],
             routePattern: 'api/modules/sirsoft-board/boards/{slug}/posts',
         );
-        $role = new Role(['identifier' => 'guest']);
+        $role = new Role(['identifier' => 'guest', 'is_active' => true]);
         $role->setRelation('permissions', collect([
             new Permission([
                 'identifier' => 'sirsoft-board.freebd.posts.read',
@@ -202,7 +202,7 @@ final class GuestEligibilityTest extends PowerCacheTestCase
             uri: '/api/modules/sirsoft-board/boards/private/posts',
             routePattern: 'api/modules/sirsoft-board/boards/{slug}/posts',
         );
-        $role = new Role(['identifier' => 'guest']);
+        $role = new Role(['identifier' => 'guest', 'is_active' => true]);
         $role->setRelation('permissions', collect());
         $request->attributes->set('_guest_role_cache', $role);
 
@@ -333,7 +333,7 @@ final class GuestEligibilityTest extends PowerCacheTestCase
                 ],
                 routePattern: 'api/modules/sirsoft-board/boards/{slug}/posts',
             );
-            $role = new Role(['identifier' => 'guest']);
+            $role = new Role(['identifier' => 'guest', 'is_active' => true]);
             $role->setRelation('permissions', collect([
                 new Permission([
                     'identifier' => 'sirsoft-board.freebd.posts.read',

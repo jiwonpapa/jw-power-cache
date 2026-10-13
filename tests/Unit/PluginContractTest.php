@@ -4,6 +4,14 @@ namespace Plugins\Jw\PowerCache\Tests\Unit;
 
 use App\Rules\ValidLayoutStructure;
 use App\Rules\WhitelistedEndpoint;
+use Illuminate\Config\Repository;
+use Illuminate\Container\Container;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Foundation\Application;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Translation\ArrayLoader;
+use Illuminate\Translation\Translator;
 use PHPUnit\Framework\TestCase;
 use Plugins\Jw\PowerCache\Listeners\ContentInvalidationListener;
 use Plugins\Jw\PowerCache\Listeners\CoreInvalidationListener;
@@ -25,7 +33,7 @@ final class PluginContractTest extends TestCase
         // AbstractPlugin::getIdentifier()는 설치 디렉터리명에서 추론한다.
         // 독립 저장소 루트의 표시용 폴더명과 G7 설치 식별자를 분리해 검증한다.
         self::assertSame('jw-power_cache', $manifest['identifier']);
-        self::assertSame('0.4.0', $plugin->getVersion());
+        self::assertSame('0.4.1', $plugin->getVersion());
         self::assertSame('observe', $plugin->getConfigValues()['mode']);
         self::assertArrayNotHasKey('store_driver', $plugin->getConfigValues());
         self::assertSame('>=7.0.9', $manifest['g7_version']);
@@ -96,6 +104,7 @@ final class PluginContractTest extends TestCase
             'sirsoft-board.comment.after_create',
             'sirsoft-board.attachment.after_upload',
             'sirsoft-board.permissions.after_update',
+            'sirsoft-board.reaction.after_react',
         ] as $hook) {
             self::assertSame('handleBoardMutation', $contentHooks[$hook]['method'] ?? null, $hook);
         }
@@ -104,6 +113,7 @@ final class PluginContractTest extends TestCase
         foreach ([
             'core.role.after_sync_permissions',
             'core.user.after_update',
+            'core.user.after_bulk_update_roles',
             'core.attachment.after_upload',
         ] as $hook) {
             self::assertSame('handleBoardPresentationMutation', $coreHooks[$hook]['method'] ?? null, $hook);
@@ -219,6 +229,34 @@ final class PluginContractTest extends TestCase
     }
 
     public function test_admin_settings_layout_passes_core_structure_and_endpoint_rules(): void
+    {
+        $previousApp = Facade::getFacadeApplication();
+        $previousContainer = Container::getInstance();
+        $app = new Application(JW_POWER_CACHE_G7_ROOT);
+        $app->instance('config', new Repository(['app' => ['locale' => 'ko']]));
+        $app->instance('translator', new Translator(new ArrayLoader, 'ko'));
+        $router = new Router(new Dispatcher($app), $app);
+        $router->get('api/admin/plugins/{identifier}/settings', fn () => null);
+        $app->instance('router', $router);
+        Facade::clearResolvedInstances();
+        Facade::setFacadeApplication($app);
+        if (method_exists(WhitelistedEndpoint::class, 'flushNamespaceCache')) {
+            WhitelistedEndpoint::flushNamespaceCache();
+        }
+
+        try {
+            $this->assertAdminSettingsLayoutIsValid();
+        } finally {
+            if (method_exists(WhitelistedEndpoint::class, 'flushNamespaceCache')) {
+                WhitelistedEndpoint::flushNamespaceCache();
+            }
+            Facade::clearResolvedInstances();
+            Facade::setFacadeApplication($previousApp);
+            Container::setInstance($previousContainer);
+        }
+    }
+
+    private function assertAdminSettingsLayoutIsValid(): void
     {
         $layout = json_decode(
             file_get_contents(dirname(__DIR__, 2).'/resources/layouts/admin/plugin_settings.json'),

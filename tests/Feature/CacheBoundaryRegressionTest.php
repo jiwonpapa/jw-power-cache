@@ -256,9 +256,9 @@ final class CacheBoundaryRegressionTest extends PowerCacheTestCase
     public function test_policy_upgrade_does_not_reuse_old_response_keys(): void
     {
         [$middleware] = $this->runtime();
-        config(['jw_power_cache.policy_version' => 'response-api-v3']);
-        $middleware->handle($this->request(), fn (): JsonResponse => new JsonResponse(['policy' => 'old']));
         config(['jw_power_cache.policy_version' => 'response-api-v4']);
+        $middleware->handle($this->request(), fn (): JsonResponse => new JsonResponse(['policy' => 'old']));
+        config(['jw_power_cache.policy_version' => 'response-api-v5']);
         $response = $middleware->handle($this->request(), fn (): JsonResponse => new JsonResponse(['policy' => 'new']));
 
         self::assertSame('new', json_decode($response->getContent(), true)['policy']);
@@ -329,7 +329,7 @@ final class CacheBoundaryRegressionTest extends PowerCacheTestCase
             $request->setUserResolver(fn () => null);
             $this->app->instance('request', $request);
         }
-        $role = new Role(['identifier' => 'guest']);
+        $role = new Role(['identifier' => 'guest', 'is_active' => true]);
         $role->setRelation('permissions', collect([new Permission([
             'identifier' => 'sirsoft-board.audit.posts.read', 'type' => PermissionType::User,
         ])]));

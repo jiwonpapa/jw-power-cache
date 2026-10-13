@@ -71,7 +71,7 @@ final class GuestEligibility
 
         if ($request->cookies->count() > 0
             && (! $policy->allowBrowserSession
-                || ($user === null && ! $this->onlyBrowserSessionCookies($request)))) {
+                || ($user === null && ! $this->onlyKnownPublicCookies($request)))) {
             return EligibilityResult::bypass('cookie');
         }
 
@@ -201,12 +201,21 @@ final class GuestEligibility
         return $missing || ! is_string($resolved) || $resolved === '' ? null : $resolved;
     }
 
-    private function onlyBrowserSessionCookies(Request $request): bool
+    private function onlyKnownPublicCookies(Request $request): bool
     {
         $allowed = ['XSRF-TOKEN'];
         $sessionCookie = config('session.cookie', 'laravel_session');
         if (is_string($sessionCookie) && $sessionCookie !== '') {
             $allowed[] = $sessionCookie;
+        }
+
+        // G7 7.1 방문자 통계 쿠키는 게시판 목록의 내용이나 읽기 권한을 바꾸지 않습니다.
+        // 코어가 실제 설정한 이름만 허용하며, 설정이 없는 이전 G7의 허용 범위는 유지합니다.
+        foreach (['analytics.cookies.visitor', 'analytics.cookies.opt_out'] as $key) {
+            $cookie = config($key);
+            if (is_string($cookie) && $cookie !== '') {
+                $allowed[] = $cookie;
+            }
         }
 
         return array_diff(array_keys($request->cookies->all()), $allowed) === [];

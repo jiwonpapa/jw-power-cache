@@ -11,7 +11,7 @@ permissions:
 
 env:
   G7_REPOSITORY: gnuboard/g7
-  G7_REF: 56836a2b66c3bc4c3ae84ab1ae983248bb6d40b0
+  G7_REF: dbe88420c3219f42db1ac16a7e6bb17a438e144d
 
 jobs:
   verify-and-release:

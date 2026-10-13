@@ -11,7 +11,7 @@ permissions:
 
 env:
   G7_REPOSITORY: gnuboard/g7
-  G7_REF: 56836a2b66c3bc4c3ae84ab1ae983248bb6d40b0
+  G7_REF: dbe88420c3219f42db1ac16a7e6bb17a438e144d
 
 concurrency:
   group: quality-${{ github.ref }}
@@ -19,13 +19,18 @@ concurrency:
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} / official G7 7.0.9
+    name: PHP ${{ matrix.php }} / official G7 ${{ matrix.g7.version }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         php: ['8.2', '8.5']
+        g7:
+          - version: '7.0.9'
+            ref: 56836a2b66c3bc4c3ae84ab1ae983248bb6d40b0
+          - version: '7.1.0'
+            ref: dbe88420c3219f42db1ac16a7e6bb17a438e144d
     services:
       redis:
         image: redis:7.4-alpine
@@ -44,7 +49,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           repository: ${{ env.G7_REPOSITORY }}
-          ref: ${{ env.G7_REF }}
+          ref: ${{ matrix.g7.ref }}
           path: g7
 
       - name: Set up PHP
@@ -84,7 +89,7 @@ jobs:
         run: tool/test.sh
 
   database:
-    name: ${{ matrix.database.name }} transaction contract
+    name: ${{ matrix.database.name }} / official G7 7.1.0 transaction contract
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
